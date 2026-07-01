@@ -51,11 +51,21 @@ LotV 기준, Liquipedia [Mining Minerals](https://liquipedia.net/starcraft2/Mini
 / [Resources](https://liquipedia.net/starcraft2/Resources). 커뮤니티 측정 근사치이며,
 `src/lib/data/lotv.ts` 상수만 고치면 정밀화·패치 대응 가능.
 
+## UI 골격 (구현됨)
+
+`src/lib/components/` — 상태는 `src/lib/stores/sim.ts`(Svelte store)에 집중.
+
+- `TopBar` — 패치 드롭다운 + 메뉴 바(커스텀패치/export/import/표시설정, 핸들러는 자리표시자)
+- `TabPanel` — 좌/우 진영: 종족 선택 + 유닛/건물/행동 탭 + 바둑판 그리드.
+  아이콘 클릭 시 현재 마커에 생산 이벤트 추가(중복=중첩).
+- `TimeArea` — 중앙 세로 시간선(1초=4px). 커서 hover→가로줄 + 양 진영 자원 표시,
+  클릭→마커 배치, 마커별 자원 readout, 자원 부족 시 빨간 오류 마커.
+
 ## 알려진 한계 / 다음 단계
 
 - **미네랄 패치 고갈 미반영** (장기 빌드에서 실제보다 수입 과대). 향후 패치별 잔량 추적.
 - 보급은 완성 시점에 반영(주문 시점 예약 아님) — 모델링 선택.
 - 유닛 데이터셋은 최소(일꾼·보급·예시 유닛)만 수록 — 확장 필요.
-- **UI 미구현**: 시간선(1초=4px), 커서 가로줄, 마커, 유닛/건물/행동 탭, 좌우 진영
-  비교, 패치 드롭다운/메뉴바(export·import). `Layout.png` / `DESIGN-DOCUMENT.txt` 참고.
+- 메뉴 바 기능(export/import/커스텀 패치/표시 설정) 핸들러 미구현.
+- 마커에 배치된 생산 큐의 시각적 목록/편집 UI 미구현(자원 계산에는 이미 반영됨).
 ```
