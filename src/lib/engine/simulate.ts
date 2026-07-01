@@ -1,0 +1,268 @@
+import { gasIncomePerSec, mineralIncomePerSec } from "./harvest";
+import type {
+  BuildEvent,
+  PatchData,
+  Race,
+  ResourceError,
+  ResourceState,
+  SimulationResult,
+  UnitDef,
+} from "./types";
+
+export interface SimulateOptions {
+  /** 시뮬레이션 총 길이(초). */
+  duration: number;
+  /** train_worker 이벤트가 생산할 일꾼의 종족 (기본 terran). */
+  race?: Race;
+}
+
+// 내부 표현: 이벤트를 시각별 "연산(op)"으로 펼친다.
+// 일부 op(일꾼 재배치/사망)는 그 시점의 라이브 상태에 의존하므로,
+// 고정 숫자 델타가 아니라 walk 중에 가변 상태를 참조해 적용한다.
+type Op =
+  | { t: number; type: "spend"; minerals: number; gas: number }
+  | { t: number; type: "complete"; def: UnitDef }
+  | { t: number; type: "pauseStart"; resource: "minerals" | "gas"; workers: number }
+  | { t: number; type: "pauseEnd"; resource: "minerals" | "gas"; workers: number }
+  | { t: number; type: "assign"; to: "minerals" | "gas"; workers: number }
+  | { t: number; type: "death"; isWorker: boolean; supply: number; count: number };
+
+interface Segment {
+  start: number;
+  minerals: number;
+  gas: number;
+  mineralRate: number;
+  gasRate: number;
+  supplyUsed: number;
+  supplyCap: number;
+  mineralWorkers: number;
+  gasWorkers: number;
+}
+
+function findWorker(patch: PatchData, race: Race): UnitDef {
+  const w = Object.values(patch.units).find((u) => u.isWorker && u.race === race);
+  if (!w) throw new Error(`패치 '${patch.id}'에 종족 '${race}'의 일꾼 정의가 없습니다.`);
+  return w;
+}
+
+/** 이벤트 목록을 시각별 op 목록으로 전개. */
+function buildOps(events: BuildEvent[], patch: PatchData, race: Race, duration: number): Op[] {
+  const ops: Op[] = [];
+  const push = (op: Op) => {
+    if (op.t <= duration) ops.push(op);
+  };
+
+  const emitProduction = (t: number, def: UnitDef) => {
+    // 주문 시점에 자원 소모, 완성 시점에 유닛/보급 반영.
+    push({ t, type: "spend", minerals: def.minerals, gas: def.gas });
+    push({ t: t + def.buildTime, type: "complete", def });
+  };
+
+  for (const e of events) {
+    switch (e.kind) {
+      case "train_worker":
+        emitProduction(e.time, findWorker(patch, race));
+        break;
+      case "train_unit":
+      case "build_structure": {
+        const def = patch.units[e.unitId];
+        if (!def) throw new Error(`알 수 없는 유닛 id: ${e.unitId}`);
+        emitProduction(e.time, def);
+        break;
+      }
+      case "worker_transfer": {
+        const resource = e.resource ?? "minerals";
+        push({ t: e.time, type: "pauseStart", resource, workers: e.workers });
+        push({ t: e.time + e.duration, type: "pauseEnd", resource, workers: e.workers });
+        break;
+      }
+      case "assign_worker":
+        push({ t: e.time, type: "assign", to: e.to, workers: e.workers });
+        break;
+      case "unit_death": {
+        const count = e.count ?? 1;
+        const isWorker = e.unitId === "worker" || patch.units[e.unitId]?.isWorker === true;
+        const supply = isWorker ? 1 : (patch.units[e.unitId]?.supply ?? 0);
+        push({ t: e.time, type: "death", isWorker, supply, count });
+        break;
+      }
+    }
+  }
+
+  // 시각 오름차순 정렬 (동일 시각은 삽입 순서 유지 = 안정 정렬).
+  return ops
+    .map((op, i) => ({ op, i }))
+    .sort((a, b) => a.op.t - b.op.t || a.i - b.i)
+    .map((x) => x.op);
+}
+
+/**
+ * 빌드 이벤트 타임라인을 시뮬레이션한다.
+ * - 구간(op 사이)마다 채취 수입은 일정하므로 선형 적분.
+ * - 자원 수입은 항상 ≥ 0 이므로 자원이 마이너스가 되는 건 오직 소모(spend) 지점뿐 →
+ *   각 breakpoint 적용 직후에만 부족 여부를 검사하면 충분하다.
+ */
+export function simulate(
+  events: BuildEvent[],
+  patch: PatchData,
+  options: SimulateOptions,
+): SimulationResult {
+  const { duration } = options;
+  const race = options.race ?? "terran";
+  const model = patch.harvest;
+  const patches = patch.base.mineralPatches;
+  const geysers = patch.base.geysers;
+
+  const ops = buildOps(events, patch, race, duration);
+
+  // 라이브 상태
+  let minerals = patch.start.minerals;
+  let gas = patch.start.gas;
+  let supplyUsed = patch.start.workers;
+  let supplyCap = patch.start.supplyCap;
+  let mineralWorkers = patch.start.workers;
+  let gasWorkers = 0;
+  let pausedMineral = 0;
+  let pausedGas = 0;
+
+  const rates = () => ({
+    mineralRate: mineralIncomePerSec(mineralWorkers - pausedMineral, patches, model),
+    gasRate: gasIncomePerSec(gasWorkers - pausedGas, geysers, model),
+  });
+
+  const applyOp = (op: Op) => {
+    switch (op.type) {
+      case "spend":
+        minerals -= op.minerals;
+        gas -= op.gas;
+        break;
+      case "complete":
+        if (op.def.isWorker) {
+          mineralWorkers += 1; // 완성된 일꾼은 기본적으로 미네랄에 합류
+          supplyUsed += op.def.supply;
+        } else {
+          supplyUsed += op.def.supply;
+          if (op.def.supplyProvided) supplyCap += op.def.supplyProvided;
+        }
+        break;
+      case "pauseStart":
+        if (op.resource === "minerals") pausedMineral += op.workers;
+        else pausedGas += op.workers;
+        break;
+      case "pauseEnd":
+        if (op.resource === "minerals") pausedMineral -= op.workers;
+        else pausedGas -= op.workers;
+        break;
+      case "assign": {
+        if (op.to === "gas") {
+          const n = Math.min(op.workers, mineralWorkers);
+          mineralWorkers -= n;
+          gasWorkers += n;
+        } else {
+          const n = Math.min(op.workers, gasWorkers);
+          gasWorkers -= n;
+          mineralWorkers += n;
+        }
+        break;
+      }
+      case "death": {
+        let remaining = op.count;
+        const fromMin = Math.min(remaining, mineralWorkers);
+        if (op.isWorker) {
+          mineralWorkers -= fromMin;
+          remaining -= fromMin;
+          gasWorkers = Math.max(0, gasWorkers - remaining);
+        }
+        supplyUsed = Math.max(0, supplyUsed - op.count * op.supply);
+        break;
+      }
+    }
+  };
+
+  const segments: Segment[] = [];
+  const errors: ResourceError[] = [];
+
+  // breakpoint 시각들: 0, 각 op 시각, duration.
+  const times = uniqueSortedTimes(ops, duration);
+
+  let idx = 0; // ops 커서
+  let prevStart = 0;
+  let prevRates = rates();
+
+  for (let k = 0; k < times.length; k++) {
+    const t = times[k];
+    // 직전 구간 [prevStart, t] 적분
+    if (k > 0) {
+      const dt = t - prevStart;
+      minerals += prevRates.mineralRate * dt;
+      gas += prevRates.gasRate * dt;
+    }
+    // 이 시각의 모든 op 적용
+    while (idx < ops.length && ops[idx].t === t) {
+      applyOp(ops[idx]);
+      idx++;
+    }
+    // 부족 검사 (소모 반영 직후)
+    if (minerals < 0) {
+      errors.push({ time: t, resource: "minerals", deficit: -minerals });
+    }
+    if (gas < 0) {
+      errors.push({ time: t, resource: "gas", deficit: -gas });
+    }
+    // 새 구간의 rate 확정 및 세그먼트 기록
+    const r = rates();
+    segments.push({
+      start: t,
+      minerals,
+      gas,
+      mineralRate: r.mineralRate,
+      gasRate: r.gasRate,
+      supplyUsed,
+      supplyCap,
+      mineralWorkers,
+      gasWorkers,
+    });
+    prevStart = t;
+    prevRates = r;
+  }
+
+  const stateAt = (time: number): ResourceState => {
+    const tc = Math.max(0, Math.min(duration, time));
+    const seg = segmentAt(segments, tc);
+    const dt = tc - seg.start;
+    return {
+      minerals: seg.minerals + seg.mineralRate * dt,
+      gas: seg.gas + seg.gasRate * dt,
+      supplyUsed: seg.supplyUsed,
+      supplyCap: seg.supplyCap,
+      workers: seg.mineralWorkers + seg.gasWorkers,
+      mineralWorkers: seg.mineralWorkers,
+      gasWorkers: seg.gasWorkers,
+    };
+  };
+
+  return { stateAt, errors };
+}
+
+function uniqueSortedTimes(ops: Op[], duration: number): number[] {
+  const set = new Set<number>([0, duration]);
+  for (const op of ops) if (op.t >= 0 && op.t <= duration) set.add(op.t);
+  return [...set].sort((a, b) => a - b);
+}
+
+/** start ≤ t 인 마지막 세그먼트를 이진 탐색으로 찾는다. */
+function segmentAt(segments: Segment[], t: number): Segment {
+  let lo = 0;
+  let hi = segments.length - 1;
+  let ans = 0;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (segments[mid].start <= t) {
+      ans = mid;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return segments[ans];
+}
