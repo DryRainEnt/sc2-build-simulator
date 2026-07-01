@@ -110,8 +110,8 @@
     "mule": {
       "name": "MULE", "race": "terran", "category": "unit",
       "minerals": 0, "gas": 0, "supply": 0, "buildTime": 0,
-      "producedFrom": ["orbital_command"],
-      "note": "궤도사령부 50에너지 소환(일시적). 미네랄 채취 보정은 M3에서 반영."
+      "producedFrom": ["orbital_command"], "hidden": true,
+      "note": "궤도사령부 50에너지 소환(일시적). 채취 보정 미구현이라 UI에서 숨김."
     },
     "marine": {
       "name": "Marine", "race": "terran", "category": "unit",

@@ -123,6 +123,7 @@ export function toPatchData(full: PatchFull): PatchData {
       requires: u.requires,
       morphedFrom: u.morphedFrom,
       startCount: u.startCount,
+      hidden: u.hidden,
       isWorker: u.category === "worker",
     };
   }

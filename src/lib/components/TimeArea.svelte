@@ -53,14 +53,15 @@
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-<div
-  class="timearea"
-  bind:this={el}
-  style="height: {height}px"
-  on:pointermove={onMove}
-  on:pointerleave={onLeave}
-  on:click={onClick}
->
+<div class="timearea">
+  <div
+    class="timeinner"
+    bind:this={el}
+    style="height: {height}px"
+    on:pointermove={onMove}
+    on:pointerleave={onLeave}
+    on:click={onClick}
+  >
   <!-- 중앙 시간선 -->
   <div class="axis"></div>
   {#each ticks as tk}
@@ -139,14 +140,19 @@
     <div class="readout left hover" class:err={neg(ls)} style="top: {timeToPx($hoverTime)}px">{fmt(ls)}</div>
     <div class="readout right hover" class:err={neg(rs)} style="top: {timeToPx($hoverTime)}px">{fmt(rs)}</div>
   {/if}
+  </div>
 </div>
 
 <style>
   .timearea {
-    position: relative;
     background: #fff;
-    cursor: crosshair;
+    /* 0초가 최상단에 붙지 않도록 위·아래 여백 */
+    padding: 40px 0 80px;
     min-height: 100%;
+  }
+  .timeinner {
+    position: relative;
+    cursor: crosshair;
   }
   .axis {
     position: absolute;

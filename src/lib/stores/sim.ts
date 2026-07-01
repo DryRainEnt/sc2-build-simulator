@@ -91,10 +91,10 @@ export function removeOneEvent(
   });
 }
 
-/** 시간선 클릭: 마커 배치 + 활성화. 이미 있으면 활성화만. */
+/** 시간선 클릭: 마커는 항상 하나만 존재 — 새 위치로 이동(교체). */
 export function placeMarker(time: number): void {
   const t = Math.round(time);
-  markers.update((m) => (m.includes(t) ? m : [...m, t].sort((a, b) => a - b)));
+  markers.set([t]);
   currentMarker.set(t);
 }
 

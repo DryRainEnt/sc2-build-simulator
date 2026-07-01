@@ -18,9 +18,14 @@ export function categoryOf(u: UnitDef): UnitCategory {
   return u.category;
 }
 
-/** 특정 종족 + 분류의 생산 가능 목록 (일꾼/업그레이드는 별도 탭에서 다룸). */
+/** 특정 종족 + 분류의 생산 가능 목록 (hidden 제외). */
 export function unitsFor(patch: PatchData, race: Race, category: UnitCategory): UnitDef[] {
   return Object.values(patch.units).filter(
-    (u) => u.race === race && u.category === category,
+    (u) => u.race === race && u.category === category && !u.hidden,
   );
+}
+
+/** 유닛 탭 목록: 일꾼을 맨 앞에 두고 전투 유닛을 잇는다 (hidden 제외). */
+export function producibleUnits(patch: PatchData, race: Race): UnitDef[] {
+  return [...unitsFor(patch, race, "worker"), ...unitsFor(patch, race, "unit")];
 }

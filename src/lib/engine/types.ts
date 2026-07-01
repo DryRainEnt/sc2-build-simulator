@@ -36,6 +36,8 @@ export interface UnitDef {
   morphedFrom?: string;
   /** 게임 시작 시 보유 개수 (예: 종족별 본진 건물 1). 테크 게이팅 시드용. */
   startCount?: number;
+  /** UI 생산 그리드에서 숨김 (정의·계산에는 유지). 예: MULE. */
+  hidden?: boolean;
   /** 일꾼 여부 — 완성 시 채취 인구에 합류. category==="worker"에서 파생. */
   isWorker?: boolean;
 }

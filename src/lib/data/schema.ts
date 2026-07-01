@@ -52,6 +52,8 @@ export const zUnit = z
     requires: z.array(z.string()).optional(),
     morphedFrom: z.string().optional(),
     startCount: z.number().int().nonnegative().optional(),
+    /** UI 생산 그리드에서 숨김 (정의는 유지). 예: MULE 등 능력 소환 유닛. */
+    hidden: z.boolean().optional(),
     /** 이 항목 수치의 출처/비고 (검증 추적용). */
     note: z.string().optional(),
   })

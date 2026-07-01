@@ -7,12 +7,11 @@
     setTab,
     setRace,
     queueProduction,
-    queueWorker,
     queueAssign,
     queueTransfer,
     queueDeath,
   } from "../stores/sim";
-  import { RACES, unitsFor, categoryOf } from "../patches";
+  import { RACES, unitsFor, producibleUnits, categoryOf } from "../patches";
   import type { Race } from "../engine/types";
 
   export let side: Side;
@@ -29,10 +28,11 @@
   $: prodList =
     faction.activeTab === "action"
       ? []
-      : unitsFor($patch, faction.race, faction.activeTab);
+      : faction.activeTab === "unit"
+        ? producibleUnits($patch, faction.race)
+        : unitsFor($patch, faction.race, "building");
 
   const actions = [
-    { id: "worker", label: "일꾼 생산" },
     { id: "gas3", label: "가스 배치 3" },
     { id: "pause", label: "채취정지 10s" },
     { id: "death", label: "일꾼 사망" },
@@ -50,9 +50,6 @@
   function clickAction(id: string) {
     if (cur == null) return;
     switch (id) {
-      case "worker":
-        queueWorker(side, cur);
-        break;
       case "gas3":
         queueAssign(side, cur, 3, "gas");
         break;
