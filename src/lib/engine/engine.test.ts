@@ -134,6 +134,59 @@ describe("시뮬레이션 — 일꾼 이동/재배치/사망", () => {
   });
 });
 
+describe("시뮬레이션 — 테크 선행조건 게이팅", () => {
+  it("선행 건물 없이 유닛 배치하면 경고(차단 아님)", () => {
+    // 병영 없이 t=0에 마린 → barracks 미충족 경고
+    const r = simulate([{ time: 0, kind: "train_unit", unitId: "marine" }], LOTV_PATCH, {
+      duration: 60,
+    });
+    expect(r.techWarnings).toHaveLength(1);
+    expect(r.techWarnings[0]).toMatchObject({ time: 0, unitId: "marine" });
+    expect(r.techWarnings[0].missing).toContain("barracks");
+  });
+
+  it("선행 건물이 완성된 뒤 배치하면 경고 없음", () => {
+    // 보급고(0,완성21) → 병영(21,완성67) → 마린(70): 모두 충족
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "supply_depot" },
+      { time: 21, kind: "build_structure", unitId: "barracks" },
+      { time: 70, kind: "train_unit", unitId: "marine" },
+    ];
+    const r = simulate(events, LOTV_PATCH, { duration: 120 });
+    expect(r.techWarnings).toHaveLength(0);
+  });
+
+  it("선행 건물이 아직 건설 중이면 경고", () => {
+    // 병영 t=0(완성46), 마린 t=40 → 아직 미완성 → 경고
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "supply_depot" },
+      { time: 0, kind: "build_structure", unitId: "barracks" },
+      { time: 40, kind: "train_unit", unitId: "marine" },
+    ];
+    const r = simulate(events, LOTV_PATCH, { duration: 120 });
+    const marineWarn = r.techWarnings.find((w) => w.unitId === "marine");
+    expect(marineWarn).toBeDefined();
+    expect(marineWarn!.missing).toContain("barracks");
+  });
+
+  it("시작 보유 본진은 선행조건을 충족시킨다", () => {
+    // engineering_bay requires command_center(시작 보유) → t=0 배치도 경고 없음
+    const r = simulate([{ time: 0, kind: "build_structure", unitId: "engineering_bay" }], LOTV_PATCH, {
+      duration: 60,
+    });
+    expect(r.techWarnings.find((w) => w.unitId === "engineering_bay")).toBeUndefined();
+  });
+
+  it("다중 선행조건: 전투순양함은 스타포트+테크랩+핵융합로 필요", () => {
+    const r = simulate([{ time: 0, kind: "train_unit", unitId: "battlecruiser" }], LOTV_PATCH, {
+      duration: 60,
+    });
+    const w = r.techWarnings.find((x) => x.unitId === "battlecruiser");
+    expect(w).toBeDefined();
+    expect(w!.missing.sort()).toEqual(["fusion_core", "starport", "tech_lab"]);
+  });
+});
+
 describe("시뮬레이션 — 보급 공급", () => {
   it("서플라이 디폿 완성 시 보급 최대치 증가", () => {
     const events: BuildEvent[] = [

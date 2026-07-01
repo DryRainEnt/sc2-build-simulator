@@ -6,6 +6,7 @@ import type {
   ResourceError,
   ResourceState,
   SimulationResult,
+  TechWarning,
   UnitDef,
 } from "./types";
 
@@ -241,7 +242,65 @@ export function simulate(
     };
   };
 
-  return { stateAt, errors };
+  const techWarnings = computeTechWarnings(events, patch, race, duration);
+
+  return { stateAt, errors, techWarnings };
+}
+
+/** 생산/건설 이벤트가 만들어내는 유닛 정의를 해석. 그 외 이벤트는 null. */
+function producedDef(e: BuildEvent, patch: PatchData, race: Race): UnitDef | null {
+  switch (e.kind) {
+    case "train_worker":
+      return findWorker(patch, race);
+    case "train_unit":
+    case "build_structure":
+      return patch.units[e.unitId] ?? null;
+    default:
+      return null;
+  }
+}
+
+/**
+ * 테크 선행조건 게이팅: 각 생산/건설 이벤트의 requires 가 그 주문 시점에
+ * 이미 완성돼 있는지 검사한다. 미충족이면 경고(차단 아님).
+ *
+ * 가용성 판정: 어떤 id 의 "최초 완성 시각" = min(시작보유면 0, 각 생산 이벤트의 time+buildTime).
+ * 선행조건 reqId 의 최초 완성 시각이 이벤트 주문 시각보다 크면(또는 없으면) 미충족.
+ */
+function computeTechWarnings(
+  events: BuildEvent[],
+  patch: PatchData,
+  race: Race,
+  duration: number,
+): TechWarning[] {
+  const firstComplete = new Map<string, number>();
+  const seed = (id: string, t: number) => {
+    const cur = firstComplete.get(id);
+    if (cur === undefined || t < cur) firstComplete.set(id, t);
+  };
+
+  // 시작 보유 구조물(본진 등)은 t=0 에 완성된 것으로 시드.
+  for (const u of Object.values(patch.units)) {
+    if (u.startCount && u.startCount > 0) seed(u.id, 0);
+  }
+  // 각 생산 이벤트의 완성 시각 반영.
+  for (const e of events) {
+    const def = producedDef(e, patch, race);
+    if (def) seed(def.id, e.time + def.buildTime);
+  }
+
+  const warnings: TechWarning[] = [];
+  for (const e of events) {
+    if (e.time < 0 || e.time > duration) continue;
+    const def = producedDef(e, patch, race);
+    if (!def?.requires?.length) continue;
+    const missing = def.requires.filter((reqId) => {
+      const ct = firstComplete.get(reqId);
+      return ct === undefined || ct > e.time;
+    });
+    if (missing.length > 0) warnings.push({ time: e.time, unitId: def.id, missing });
+  }
+  return warnings;
 }
 
 function uniqueSortedTimes(ops: Op[], duration: number): number[] {

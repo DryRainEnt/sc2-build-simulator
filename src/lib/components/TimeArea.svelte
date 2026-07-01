@@ -6,11 +6,15 @@
     currentMarker,
     hoverTime,
     sims,
+    patch,
     placeMarker,
     selectMarker,
     removeMarker,
   } from "../stores/sim";
   import type { ResourceState } from "../engine/types";
+
+  const nameOf = (id: string) => $patch.units[id]?.name ?? id;
+  const missingLabel = (missing: string[]) => missing.map(nameOf).join(", ");
 
   let el: HTMLDivElement;
 
@@ -65,6 +69,14 @@
   {/each}
   {#each $sims.right.errors as err}
     <div class="errmark right" style="top: {timeToPx(err.time)}px" title="자원 부족: {err.resource} -{Math.ceil(err.deficit)}"></div>
+  {/each}
+
+  <!-- 테크 선행조건 경고 마커 (진영별) -->
+  {#each $sims.left.techWarnings as w}
+    <div class="techmark left" style="top: {timeToPx(w.time)}px" title="{nameOf(w.unitId)}: 선행 부족 → {missingLabel(w.missing)}"></div>
+  {/each}
+  {#each $sims.right.techWarnings as w}
+    <div class="techmark right" style="top: {timeToPx(w.time)}px" title="{nameOf(w.unitId)}: 선행 부족 → {missingLabel(w.missing)}"></div>
   {/each}
 
   <!-- 배치된 마커 -->
@@ -220,5 +232,21 @@
   }
   .errmark.right {
     left: calc(50% + 6px);
+  }
+  .techmark {
+    position: absolute;
+    width: 0;
+    height: 0;
+    transform: translateY(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 11px solid #f59e0b;
+    z-index: 4;
+  }
+  .techmark.left {
+    left: calc(50% - 30px);
+  }
+  .techmark.right {
+    left: calc(50% + 20px);
   }
 </style>

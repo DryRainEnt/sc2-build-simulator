@@ -34,6 +34,8 @@ export interface UnitDef {
   requires?: string[];
   /** 저그 변태 원본 (예: 드론 → "larva", 스포닝풀 → "drone"). */
   morphedFrom?: string;
+  /** 게임 시작 시 보유 개수 (예: 종족별 본진 건물 1). 테크 게이팅 시드용. */
+  startCount?: number;
   /** 일꾼 여부 — 완성 시 채취 인구에 합류. category==="worker"에서 파생. */
   isWorker?: boolean;
 }
@@ -156,6 +158,15 @@ export interface ResourceError {
   deficit: number;
 }
 
+/** 테크 선행조건 미충족 지점 (경고 마커). 차단이 아니라 표시만 한다(사양서 철학). */
+export interface TechWarning {
+  time: number;
+  /** 배치하려는 유닛/건물 id. */
+  unitId: string;
+  /** 그 시점에 아직 완성되지 않았거나 없는 선행조건 id들. */
+  missing: string[];
+}
+
 export interface SimulationOptions {
   /** 시뮬레이션 총 길이(초). */
   duration: number;
@@ -166,4 +177,6 @@ export interface SimulationResult {
   stateAt: (t: number) => ResourceState;
   /** 자원 부족(마이너스) 발생 지점들. */
   errors: ResourceError[];
+  /** 테크 선행조건 미충족 경고들. */
+  techWarnings: TechWarning[];
 }

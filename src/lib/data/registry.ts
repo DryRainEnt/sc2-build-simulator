@@ -122,6 +122,7 @@ export function toPatchData(full: PatchFull): PatchData {
       producedFrom: u.producedFrom,
       requires: u.requires,
       morphedFrom: u.morphedFrom,
+      startCount: u.startCount,
       isWorker: u.category === "worker",
     };
   }

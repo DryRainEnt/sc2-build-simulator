@@ -17,7 +17,7 @@
     "command_center": {
       "name": "Command Center", "race": "terran", "category": "building",
       "minerals": 400, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 71,
-      "producedFrom": ["scv"]
+      "producedFrom": ["scv"], "startCount": 1
     },
     "orbital_command": {
       "name": "Orbital Command", "race": "terran", "category": "building",
@@ -201,7 +201,7 @@
     "nexus": {
       "name": "Nexus", "race": "protoss", "category": "building",
       "minerals": 400, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 71,
-      "producedFrom": ["probe"], "note": "WIP—M4"
+      "producedFrom": ["probe"], "startCount": 1, "note": "WIP—M4"
     },
     "pylon": {
       "name": "Pylon", "race": "protoss", "category": "building",
@@ -226,7 +226,7 @@
     "hatchery": {
       "name": "Hatchery", "race": "zerg", "category": "building",
       "minerals": 300, "gas": 0, "supply": 0, "supplyProvided": 6, "buildTime": 71,
-      "producedFrom": ["drone"], "note": "WIP—M4"
+      "producedFrom": ["drone"], "startCount": 1, "note": "WIP—M4"
     },
     "overlord": {
       "name": "Overlord", "race": "zerg", "category": "unit",

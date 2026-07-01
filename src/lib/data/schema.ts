@@ -51,6 +51,7 @@ export const zUnit = z
     producedFrom: z.array(z.string()).optional(),
     requires: z.array(z.string()).optional(),
     morphedFrom: z.string().optional(),
+    startCount: z.number().int().nonnegative().optional(),
     /** 이 항목 수치의 출처/비고 (검증 추적용). */
     note: z.string().optional(),
   })
