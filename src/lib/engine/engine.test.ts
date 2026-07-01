@@ -84,6 +84,7 @@ describe("시뮬레이션 — 자원 부족 오류 마커", () => {
       id: "ghost",
       name: "Ghost",
       race: "terran",
+      category: "unit",
       minerals: 150,
       gas: 125,
       supply: 2,

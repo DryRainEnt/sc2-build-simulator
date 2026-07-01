@@ -1,0 +1,104 @@
+{
+  "version": "5.0.14",
+  "name": "5.0.14 (기준·WIP)",
+  "source": "https://liquipedia.net/starcraft2/Mining_Minerals",
+  "notes": "채취율은 Liquipedia 근거 근사치(확정). 유닛/건물 수치 중 mineral/gas 비용은 잘 알려진 값이나 buildTime 및 일부 값은 WIP — 공식/위키 대조 검증 필요. 생산원(producedFrom)·선행조건(requires)은 테크트리/생산용량 모델용.",
+  "harvest": {
+    "mineralPerWorker": 0.6666666667,
+    "mineralPerWorkerSaturated": 0.3333333333,
+    "gasPerWorker": 0.6333333333,
+    "workersPerMineralPatch": 2,
+    "maxWorkersPerMineralPatch": 3,
+    "maxWorkersPerGeyser": 3
+  },
+  "start": { "minerals": 50, "gas": 0, "workers": 12, "supplyCap": 15 },
+  "base": { "mineralPatches": 8, "geysers": 2 },
+  "units": {
+    "command_center": {
+      "name": "Command Center", "race": "terran", "category": "building",
+      "minerals": 400, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 71,
+      "producedFrom": ["scv"], "note": "buildTime WIP"
+    },
+    "scv": {
+      "name": "SCV", "race": "terran", "category": "worker",
+      "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12,
+      "producedFrom": ["command_center"], "note": "buildTime WIP"
+    },
+    "supply_depot": {
+      "name": "Supply Depot", "race": "terran", "category": "building",
+      "minerals": 100, "gas": 0, "supply": 0, "supplyProvided": 8, "buildTime": 21,
+      "producedFrom": ["scv"], "note": "buildTime WIP"
+    },
+    "refinery": {
+      "name": "Refinery", "race": "terran", "category": "building",
+      "minerals": 75, "gas": 0, "supply": 0, "buildTime": 21,
+      "producedFrom": ["scv"], "note": "buildTime WIP"
+    },
+    "barracks": {
+      "name": "Barracks", "race": "terran", "category": "building",
+      "minerals": 150, "gas": 0, "supply": 0, "buildTime": 46,
+      "producedFrom": ["scv"], "requires": ["supply_depot"], "note": "buildTime WIP"
+    },
+    "marine": {
+      "name": "Marine", "race": "terran", "category": "unit",
+      "minerals": 50, "gas": 0, "supply": 1, "buildTime": 18,
+      "producedFrom": ["barracks"], "requires": ["barracks"], "note": "buildTime WIP"
+    },
+    "nexus": {
+      "name": "Nexus", "race": "protoss", "category": "building",
+      "minerals": 400, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 71,
+      "producedFrom": ["probe"], "note": "buildTime WIP"
+    },
+    "probe": {
+      "name": "Probe", "race": "protoss", "category": "worker",
+      "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12,
+      "producedFrom": ["nexus"], "note": "buildTime WIP"
+    },
+    "pylon": {
+      "name": "Pylon", "race": "protoss", "category": "building",
+      "minerals": 100, "gas": 0, "supply": 0, "supplyProvided": 8, "buildTime": 18,
+      "producedFrom": ["probe"], "note": "buildTime WIP"
+    },
+    "assimilator": {
+      "name": "Assimilator", "race": "protoss", "category": "building",
+      "minerals": 75, "gas": 0, "supply": 0, "buildTime": 21,
+      "producedFrom": ["probe"], "note": "buildTime WIP"
+    },
+    "gateway": {
+      "name": "Gateway", "race": "protoss", "category": "building",
+      "minerals": 150, "gas": 0, "supply": 0, "buildTime": 46,
+      "producedFrom": ["probe"], "requires": ["pylon"], "note": "buildTime WIP"
+    },
+    "zealot": {
+      "name": "Zealot", "race": "protoss", "category": "unit",
+      "minerals": 100, "gas": 0, "supply": 2, "buildTime": 27,
+      "producedFrom": ["gateway"], "requires": ["gateway"], "note": "buildTime WIP"
+    },
+    "hatchery": {
+      "name": "Hatchery", "race": "zerg", "category": "building",
+      "minerals": 300, "gas": 0, "supply": 0, "supplyProvided": 6, "buildTime": 71,
+      "producedFrom": ["drone"], "note": "라바 기믹 M4에서 반영. buildTime WIP"
+    },
+    "drone": {
+      "name": "Drone", "race": "zerg", "category": "worker",
+      "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12,
+      "producedFrom": ["hatchery"], "morphedFrom": "larva", "note": "라바에서 변태. buildTime WIP"
+    },
+    "overlord": {
+      "name": "Overlord", "race": "zerg", "category": "unit",
+      "minerals": 100, "gas": 0, "supply": 0, "supplyProvided": 8, "buildTime": 18,
+      "producedFrom": ["hatchery"], "morphedFrom": "larva", "note": "buildTime WIP"
+    },
+    "spawning_pool": {
+      "name": "Spawning Pool", "race": "zerg", "category": "building",
+      "minerals": 200, "gas": 0, "supply": 0, "buildTime": 46,
+      "producedFrom": ["drone"], "requires": ["hatchery"], "note": "buildTime WIP"
+    },
+    "zergling": {
+      "name": "Zergling", "race": "zerg", "category": "unit",
+      "minerals": 25, "gas": 0, "supply": 0.5, "buildTime": 17,
+      "producedFrom": ["larva"], "requires": ["spawning_pool"], "morphedFrom": "larva",
+      "note": "라바당 2기 생산(쌍), 개당 0.5보급. 쌍 생산 기믹 M4에서 반영. buildTime WIP"
+    }
+  }
+}

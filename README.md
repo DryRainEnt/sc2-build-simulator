@@ -45,6 +45,36 @@ src/
 `train_worker`, `train_unit`, `build_structure`, `worker_transfer`(채취 일시정지),
 `assign_worker`(미네랄↔가스 재배치), `unit_death`.
 
+## 데이터 아키텍처 (패치 버전 관리)
+
+밸런스 패치가 바뀔 때마다 데이터를 쉽게 유지보수하도록 **버전별 파일 + 상속 오버라이드**
+구조로 설계했다.
+
+```
+src/lib/data/
+  schema.ts        # zod 스키마 (온디스크 데이터 형태의 단일 진실 공급원)
+  registry.ts      # 상속(extends) 해석 + 깊은 병합 + 검증 → 엔진용 PatchData
+  patches/
+    5.0.14.json    # 완전한 베이스 패치
+```
+
+- 각 패치는 파일 하나. `patches/*.json` 은 자동 로드·검증된다.
+- **새 패치는 이전 패치를 `extends` 하고 바뀐 값만 적는다(diff).** 예:
+
+  ```json
+  { "version": "5.0.15", "extends": "5.0.14", "name": "5.0.15",
+    "source": "https://liquipedia.net/starcraft2/Patch_5.0.15",
+    "units": { "marine": { "minerals": 45 } } }
+  ```
+
+  → 마린 비용만 바뀌고 나머지는 5.0.14 를 그대로 상속. 전체 재입력 불필요.
+- 로드 시 zod 로 검증하며, **새 유닛을 부분정의로만 추가하면 실패**(완전 정의 강제).
+- 유닛 스키마는 정확도에 필요한 필드를 모두 담는다: 비용/보급/생산시간 +
+  `producedFrom`(생산원), `requires`(테크 선행조건), `morphedFrom`(저그 변태), `note`(출처/검증).
+
+> 현재 `5.0.14.json` 의 유닛 수치는 **WIP**다. mineral/gas 비용은 알려진 값이나
+> `buildTime` 등은 공식/위키 대조 검증이 필요하며, 이는 M2(테란)부터 채운다.
+
 ## 자원 수치 출처
 
 LotV 기준, Liquipedia [Mining Minerals](https://liquipedia.net/starcraft2/Mining_Minerals)

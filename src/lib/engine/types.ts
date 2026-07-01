@@ -10,20 +10,31 @@ export type Race = "terran" | "zerg" | "protoss";
 /** 채취 대상 종류. */
 export type ResourceKind = "minerals" | "gas";
 
+/** 유닛 분류. worker=일꾼, unit=생산유닛, building=건물, upgrade=업그레이드. */
+export type UnitCategory = "worker" | "unit" | "building" | "upgrade";
+
 /** 유닛/건물 정의 (패치 데이터에 수록). */
 export interface UnitDef {
   id: string;
   name: string;
   race: Race;
+  /** 분류. 데이터에 명시, UI 탭/엔진 로직 분기에 사용. */
+  category: UnitCategory;
   minerals: number;
   gas: number;
-  /** 보급 소모량. 일꾼=1, 건물=0(대개), 오버로드처럼 보급 공급 유닛은 음수 취급 대신 supplyProvided 사용. */
+  /** 보급 소모량. 일꾼=1, 건물=0(대개), 보급 공급 유닛은 음수 대신 supplyProvided 사용. */
   supply: number;
-  /** 이 유닛/건물이 공급하는 보급 (예: 서플라이 디폿=8, 오버로드=8). */
+  /** 이 유닛/건물이 공급하는 보급 (예: 서플라이 디폿=8, 오버로드=8, 사령부=15). */
   supplyProvided?: number;
   /** 생산/건설 소요 시간(초). */
   buildTime: number;
-  /** 일꾼 여부 — 완성 시 채취 인구에 합류. */
+  /** 이 유닛/건물을 생산하는 생산원 id들 (예: 마린 → ["barracks"]). 생산용량 모델용. */
+  producedFrom?: string[];
+  /** 테크 선행조건 id들 (예: 마린 → ["barracks"]). 테크 게이팅용. */
+  requires?: string[];
+  /** 저그 변태 원본 (예: 드론 → "larva", 스포닝풀 → "drone"). */
+  morphedFrom?: string;
+  /** 일꾼 여부 — 완성 시 채취 인구에 합류. category==="worker"에서 파생. */
   isWorker?: boolean;
 }
 
