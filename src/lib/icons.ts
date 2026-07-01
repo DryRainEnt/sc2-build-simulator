@@ -30,6 +30,8 @@ export function unitIconUrl(id: string | undefined): string | undefined {
   return id ? UNIT_ICONS[id] : undefined;
 }
 
-export function resourceIconUrl(kind: "minerals" | "gas" | "supply"): string | undefined {
+export function resourceIconUrl(
+  kind: "minerals" | "gas" | "supply" | "time",
+): string | undefined {
   return RESOURCE_ICONS[kind];
 }

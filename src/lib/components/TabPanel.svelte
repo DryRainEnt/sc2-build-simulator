@@ -4,6 +4,7 @@
     factions,
     patch,
     currentMarker,
+    sims,
     setTab,
     setRace,
     queueProduction,
@@ -12,9 +13,9 @@
     queueDeath,
   } from "../stores/sim";
   import { RACES, unitsFor, producibleUnits, categoryOf } from "../patches";
-  import { unitIconUrl } from "../icons";
+  import { unitIconUrl, resourceIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
-  import type { Race } from "../engine/types";
+  import type { Race, UnitDef } from "../engine/types";
 
   export let side: Side;
 
@@ -39,6 +40,34 @@
     { id: "pause", label: "채취정지 10s" },
     { id: "death", label: "일꾼 사망" },
   ];
+
+  // 자원 아이콘 (한 번만 해석)
+  const icMin = resourceIconUrl("minerals");
+  const icGas = resourceIconUrl("gas");
+  const icTime = resourceIconUrl("time");
+
+  // 커서 툴팁 상태
+  let hovered: UnitDef | null = null;
+  let tx = 0;
+  let ty = 0;
+
+  // 현재 마커 시점의 이 진영 자원 상태 (비용 부족 판정용)
+  $: markerState = cur != null ? $sims[side].stateAt(cur) : null;
+  $: insufMin = !!(hovered && markerState && hovered.minerals > markerState.minerals);
+  $: insufGas = !!(hovered && markerState && hovered.gas > markerState.gas);
+
+  function onEnter(u: UnitDef, e: MouseEvent) {
+    hovered = u;
+    tx = e.clientX;
+    ty = e.clientY;
+  }
+  function onMoveTip(e: MouseEvent) {
+    tx = e.clientX;
+    ty = e.clientY;
+  }
+  function onLeaveTip() {
+    hovered = null;
+  }
 
   function onRaceChange(e: Event) {
     setRace(side, (e.currentTarget as HTMLSelectElement).value as Race);
@@ -82,19 +111,22 @@
     {/each}
   </div>
 
-  <div class="grid" class:disabled={cur == null}>
+  <div class="grid" class:icongrid={faction.activeTab !== "action"} class:dim={cur == null}>
     {#if faction.activeTab === "action"}
       {#each actions as a}
         <button class="cell" on:click={() => clickAction(a.id)} title={a.label}>{a.label}</button>
       {/each}
     {:else}
       {#each prodList as u}
-        <button class="cell" on:click={() => clickUnit(u.id, categoryOf(u) === "building")} title={`${u.name} · ${u.minerals}m${u.gas ? "/" + u.gas + "g" : ""}`}>
-          <Icon src={unitIconUrl(u.id)} label={u.name} size={28} />
-          <span class="txt">
-            <span class="nm">{u.name}</span>
-            <span class="cost">{u.minerals}m{u.gas ? `/${u.gas}g` : ""}</span>
-          </span>
+        <button
+          class="iconcell"
+          on:click={() => clickUnit(u.id, categoryOf(u) === "building")}
+          on:mouseenter={(e) => onEnter(u, e)}
+          on:mousemove={onMoveTip}
+          on:mouseleave={onLeaveTip}
+          title={u.name}
+        >
+          <Icon src={unitIconUrl(u.id)} label={u.name} size={34} />
         </button>
       {/each}
       {#if prodList.length === 0}
@@ -109,6 +141,26 @@
     <p class="hint">현재 마커: {cur}s</p>
   {/if}
 </div>
+
+<!-- 커서 툴팁: 이름 · 미네랄 · 가스 · 시간 (마커에서 자원 부족 시 빨간색) -->
+{#if hovered}
+  <div class="tip" style="left: {tx + 14}px; top: {ty + 16}px">
+    <div class="tip-name">{hovered.name}</div>
+    <div class="tip-row">
+      <span class="stat" class:short={insufMin}>
+        <Icon src={icMin} label="M" size={13} />{hovered.minerals}
+      </span>
+      {#if hovered.gas > 0}
+        <span class="stat" class:short={insufGas}>
+          <Icon src={icGas} label="G" size={13} />{hovered.gas}
+        </span>
+      {/if}
+      <span class="stat">
+        <Icon src={icTime} label="T" size={13} />{hovered.buildTime}s
+      </span>
+    </div>
+  </div>
+{/if}
 
 <style>
   .panel {
@@ -155,18 +207,33 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 4px;
   }
-  .grid.disabled {
-    opacity: 0.5;
-    pointer-events: none;
+  .grid.icongrid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
   }
-  .cell {
+  .grid.dim {
+    opacity: 0.7;
+  }
+  /* 유닛/건물: 정사각형 아이콘 버튼 */
+  .iconcell {
+    aspect-ratio: 1;
     display: flex;
-    flex-direction: row;
     align-items: center;
-    gap: 6px;
-    padding: 5px 6px;
+    justify-content: center;
+    padding: 2px;
+    border: 1px solid #0003;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+  }
+  .iconcell:hover {
+    background: #eef;
+    border-color: #0006;
+  }
+  /* 행동 탭: 텍스트 버튼 */
+  .cell {
+    padding: 6px;
     font-size: 11px;
-    text-align: left;
     border: 1px solid #0003;
     border-radius: 4px;
     background: #fff;
@@ -174,20 +241,6 @@
   }
   .cell:hover {
     background: #eef;
-  }
-  .cell .txt {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-  .cell .nm {
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .cell .cost {
-    color: #555;
   }
   .empty {
     grid-column: 1 / -1;
@@ -198,5 +251,35 @@
     margin: 0;
     font-size: 11px;
     color: #0008;
+  }
+  .tip {
+    position: fixed;
+    z-index: 50;
+    pointer-events: none;
+    background: #111827;
+    color: #f9fafb;
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
+    box-shadow: 0 4px 12px #0006;
+    white-space: nowrap;
+  }
+  .tip-name {
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .tip-row {
+    display: flex;
+    gap: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .tip .stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .tip .stat.short {
+    color: #f87171;
+    font-weight: 700;
   }
 </style>
