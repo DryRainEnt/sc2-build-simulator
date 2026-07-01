@@ -71,6 +71,26 @@ export function removeEventsAt(side: Side, time: number): void {
   }));
 }
 
+/** 특정 시각의 특정 종류 이벤트 1개만 제거 (칩 클릭 편집용). */
+export function removeOneEvent(
+  side: Side,
+  time: number,
+  kind: BuildEvent["kind"],
+  unitId?: string,
+): void {
+  factions.update((f) => {
+    const evs = [...f[side].events];
+    const i = evs.findIndex(
+      (e) =>
+        e.time === time &&
+        e.kind === kind &&
+        (unitId === undefined || (e as { unitId?: string }).unitId === unitId),
+    );
+    if (i >= 0) evs.splice(i, 1);
+    return { ...f, [side]: { ...f[side], events: evs } };
+  });
+}
+
 /** 시간선 클릭: 마커 배치 + 활성화. 이미 있으면 활성화만. */
 export function placeMarker(time: number): void {
   const t = Math.round(time);

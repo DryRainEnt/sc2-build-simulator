@@ -7,14 +7,20 @@
     hoverTime,
     sims,
     patch,
+    factions,
     placeMarker,
     selectMarker,
     removeMarker,
+    removeOneEvent,
   } from "../stores/sim";
   import type { ResourceState } from "../engine/types";
+  import { summarizeBuild } from "../buildSummary";
 
   const nameOf = (id: string) => $patch.units[id]?.name ?? id;
   const missingLabel = (missing: string[]) => missing.map(nameOf).join(", ");
+
+  $: leftBuild = summarizeBuild($factions.left.events, $patch);
+  $: rightBuild = summarizeBuild($factions.right.events, $patch);
 
   let el: HTMLDivElement;
 
@@ -94,6 +100,34 @@
     ></button>
     <div class="readout left" class:err={neg(ls)} style="top: {timeToPx(m)}px">{fmt(ls)}</div>
     <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px">{fmt(rs)}</div>
+  {/each}
+
+  <!-- 배치된 빌드 칩 (진영별) -->
+  {#each leftBuild as g}
+    <div class="build left" style="top: {timeToPx(g.time)}px">
+      {#each g.items as it}
+        <button
+          class="chip"
+          title="{it.label} @ {g.time}s · 클릭: 1개 제거"
+          on:click|stopPropagation={() => removeOneEvent("left", g.time, it.kind, it.unitId)}
+        >
+          {it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
+        </button>
+      {/each}
+    </div>
+  {/each}
+  {#each rightBuild as g}
+    <div class="build right" style="top: {timeToPx(g.time)}px">
+      {#each g.items as it}
+        <button
+          class="chip"
+          title="{it.label} @ {g.time}s · 클릭: 1개 제거"
+          on:click|stopPropagation={() => removeOneEvent("right", g.time, it.kind, it.unitId)}
+        >
+          {it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
+        </button>
+      {/each}
+    </div>
   {/each}
 
   <!-- 커서 가로줄 -->
@@ -248,5 +282,41 @@
   }
   .techmark.right {
     left: calc(50% + 20px);
+  }
+  .build {
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    max-width: calc(50% - 40px);
+    transform: translateY(-50%);
+    z-index: 3;
+  }
+  .build.left {
+    left: 8px;
+    justify-content: flex-start;
+  }
+  .build.right {
+    right: 8px;
+    justify-content: flex-end;
+  }
+  .chip {
+    font-size: 10px;
+    line-height: 1.4;
+    padding: 1px 6px;
+    border: 1px solid #94a3b8;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: #1e293b;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .chip:hover {
+    background: #fecaca;
+    border-color: #ef4444;
+    text-decoration: line-through;
+  }
+  .chip b {
+    color: #2563eb;
   }
 </style>
