@@ -12,6 +12,8 @@
     queueDeath,
   } from "../stores/sim";
   import { RACES, unitsFor, producibleUnits, categoryOf } from "../patches";
+  import { unitIconUrl } from "../icons";
+  import Icon from "./Icon.svelte";
   import type { Race } from "../engine/types";
 
   export let side: Side;
@@ -88,8 +90,11 @@
     {:else}
       {#each prodList as u}
         <button class="cell" on:click={() => clickUnit(u.id, categoryOf(u) === "building")} title={`${u.name} · ${u.minerals}m${u.gas ? "/" + u.gas + "g" : ""}`}>
-          <span class="nm">{u.name}</span>
-          <span class="cost">{u.minerals}m{u.gas ? `/${u.gas}g` : ""}</span>
+          <Icon src={unitIconUrl(u.id)} label={u.name} size={28} />
+          <span class="txt">
+            <span class="nm">{u.name}</span>
+            <span class="cost">{u.minerals}m{u.gas ? `/${u.gas}g` : ""}</span>
+          </span>
         </button>
       {/each}
       {#if prodList.length === 0}
@@ -156,10 +161,10 @@
   }
   .cell {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    padding: 6px;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 6px;
     font-size: 11px;
     text-align: left;
     border: 1px solid #0003;
@@ -170,8 +175,16 @@
   .cell:hover {
     background: #eef;
   }
+  .cell .txt {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
   .cell .nm {
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .cell .cost {
     color: #555;

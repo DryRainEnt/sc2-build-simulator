@@ -15,6 +15,9 @@
   } from "../stores/sim";
   import type { ResourceState } from "../engine/types";
   import { summarizeBuild } from "../buildSummary";
+  import { unitIconUrl } from "../icons";
+  import Icon from "./Icon.svelte";
+  import ResourceReadout from "./ResourceReadout.svelte";
 
   const nameOf = (id: string) => $patch.units[id]?.name ?? id;
   const missingLabel = (missing: string[]) => missing.map(nameOf).join(", ");
@@ -43,10 +46,6 @@
   }
   function onClick(e: MouseEvent) {
     placeMarker(yToTime(e.clientY));
-  }
-
-  function fmt(s: ResourceState): string {
-    return `${Math.floor(s.minerals)}m · ${Math.floor(s.gas)}g · ${s.supplyUsed}/${s.supplyCap}`;
   }
 
   const neg = (s: ResourceState) => s.minerals < 0 || s.gas < 0;
@@ -99,8 +98,8 @@
       on:click|stopPropagation={() => selectMarker(m)}
       on:dblclick|stopPropagation={() => removeMarker(m)}
     ></button>
-    <div class="readout left" class:err={neg(ls)} style="top: {timeToPx(m)}px">{fmt(ls)}</div>
-    <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px">{fmt(rs)}</div>
+    <div class="readout left" class:err={neg(ls)} style="top: {timeToPx(m)}px"><ResourceReadout s={ls} /></div>
+    <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px"><ResourceReadout s={rs} /></div>
   {/each}
 
   <!-- 배치된 빌드 칩 (진영별) -->
@@ -112,7 +111,7 @@
           title="{it.label} @ {g.time}s · 클릭: 1개 제거"
           on:click|stopPropagation={() => removeOneEvent("left", g.time, it.kind, it.unitId)}
         >
-          {it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
+          {#if it.unitId}<Icon src={unitIconUrl(it.unitId)} label={it.label} size={13} />{/if}{it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
         </button>
       {/each}
     </div>
@@ -125,7 +124,7 @@
           title="{it.label} @ {g.time}s · 클릭: 1개 제거"
           on:click|stopPropagation={() => removeOneEvent("right", g.time, it.kind, it.unitId)}
         >
-          {it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
+          {#if it.unitId}<Icon src={unitIconUrl(it.unitId)} label={it.label} size={13} />{/if}{it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
         </button>
       {/each}
     </div>
@@ -137,8 +136,8 @@
     {@const rs = $sims.right.stateAt($hoverTime)}
     <div class="guide" style="top: {timeToPx($hoverTime)}px"></div>
     <div class="hover-time" style="top: {timeToPx($hoverTime)}px">{$hoverTime}s</div>
-    <div class="readout left hover" class:err={neg(ls)} style="top: {timeToPx($hoverTime)}px">{fmt(ls)}</div>
-    <div class="readout right hover" class:err={neg(rs)} style="top: {timeToPx($hoverTime)}px">{fmt(rs)}</div>
+    <div class="readout left hover" class:err={neg(ls)} style="top: {timeToPx($hoverTime)}px"><ResourceReadout s={ls} /></div>
+    <div class="readout right hover" class:err={neg(rs)} style="top: {timeToPx($hoverTime)}px"><ResourceReadout s={rs} /></div>
   {/if}
   </div>
 </div>
@@ -307,9 +306,12 @@
     justify-content: flex-end;
   }
   .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
     font-size: 10px;
     line-height: 1.4;
-    padding: 1px 6px;
+    padding: 1px 6px 1px 3px;
     border: 1px solid #94a3b8;
     border-radius: 10px;
     background: #eef2ff;
