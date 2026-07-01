@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { buildRegistry, resolvePatch, toPatchData } from "./registry";
+import { buildRegistry, resolvePatch, toPatchData, findDanglingRefs } from "./registry";
 import type { PatchFile } from "./schema";
-import { REGISTRY, DEFAULT_PATCH } from "./registry";
+import { REGISTRY, DEFAULT_PATCH, RAW_PATCHES } from "./registry";
 
 const BASE: PatchFile = {
   version: "1.0.0",
@@ -99,5 +99,26 @@ describe("패치 레지스트리 — 실데이터 로드", () => {
     expect(REGISTRY.length).toBeGreaterThan(0);
     expect(DEFAULT_PATCH.units.scv.isWorker).toBe(true);
     expect(DEFAULT_PATCH.start.workers).toBe(12);
+  });
+
+  it("실데이터에 오타로 인한 잘못된 참조(dangling ref)가 없다", () => {
+    const map = new Map(RAW_PATCHES.map((f) => [f.version, f]));
+    for (const raw of RAW_PATCHES) {
+      const full = resolvePatch(raw.version, map);
+      const dangling = findDanglingRefs(full);
+      expect(dangling, `${raw.version}: ${JSON.stringify(dangling)}`).toEqual([]);
+    }
+  });
+
+  it("테란 데이터가 완비되어 있다(핵심 유닛/건물 존재 + 확정 수치)", () => {
+    const u = DEFAULT_PATCH.units;
+    // 대표 확정치 몇 개 스팟체크 (Liquipedia LotV)
+    expect(u.battlecruiser).toMatchObject({ minerals: 400, gas: 300, supply: 6, buildTime: 64 });
+    expect(u.marauder).toMatchObject({ minerals: 100, gas: 25, buildTime: 21 });
+    expect(u.starport).toMatchObject({ minerals: 150, gas: 100, buildTime: 36 });
+    // 테크트리: 전투순양함은 스타포트+테크랩+핵융합로 선행
+    expect(u.battlecruiser.requires).toEqual(["starport", "tech_lab", "fusion_core"]);
+    const terran = Object.values(u).filter((x) => x.race === "terran");
+    expect(terran.length).toBeGreaterThanOrEqual(30);
   });
 });

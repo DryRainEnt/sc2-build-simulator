@@ -79,6 +79,32 @@ export function resolvePatch(
   return zPatchFull.parse(merged);
 }
 
+/** producedFrom/requires 가 가리켜도 되는, 유닛맵에 없는 특수 토큰 (엔진 기믹으로 처리). */
+export const SPECIAL_REFS = new Set<string>(["larva"]);
+
+export interface DanglingRef {
+  unit: string;
+  kind: "producedFrom" | "requires" | "morphedFrom";
+  ref: string;
+}
+
+/** 존재하지 않는 id 를 참조하는 producedFrom/requires/morphedFrom 를 찾는다(오타 탐지). */
+export function findDanglingRefs(full: PatchFull): DanglingRef[] {
+  const ids = new Set(Object.keys(full.units));
+  const out: DanglingRef[] = [];
+  const check = (unit: string, kind: DanglingRef["kind"], refs: string[] | undefined) => {
+    for (const ref of refs ?? []) {
+      if (!ids.has(ref) && !SPECIAL_REFS.has(ref)) out.push({ unit, kind, ref });
+    }
+  };
+  for (const [id, u] of Object.entries(full.units)) {
+    check(id, "producedFrom", u.producedFrom);
+    check(id, "requires", u.requires);
+    check(id, "morphedFrom", u.morphedFrom ? [u.morphedFrom] : undefined);
+  }
+  return out;
+}
+
 /** 검증된 완전 패치 → 엔진용 PatchData 변환. */
 export function toPatchData(full: PatchFull): PatchData {
   const units: Record<string, UnitDef> = {};

@@ -1,8 +1,8 @@
 {
   "version": "5.0.14",
-  "name": "5.0.14 (기준·WIP)",
-  "source": "https://liquipedia.net/starcraft2/Mining_Minerals",
-  "notes": "채취율은 Liquipedia 근거 근사치(확정). 유닛/건물 수치 중 mineral/gas 비용은 잘 알려진 값이나 buildTime 및 일부 값은 WIP — 공식/위키 대조 검증 필요. 생산원(producedFrom)·선행조건(requires)은 테크트리/생산용량 모델용.",
+  "name": "5.0.14 (기준)",
+  "source": "https://liquipedia.net/starcraft2/Unit_Statistics_(Legacy_of_the_Void) · https://liquipedia.net/starcraft2/Terran_Building_Statistics_(Legacy_of_the_Void) · https://liquipedia.net/starcraft2/Mining_Minerals",
+  "notes": "채취율=Liquipedia Mining_Minerals 근거. 테란 유닛/건물 비용·생산시간=Liquipedia LotV Unit/Building Statistics 표(확정). buildTime은 해당 표 기준(게임초); 래더 Faster 실시간 환산은 M5에서 표시옵션으로. 보급공급값(사령부15/보급고8 등)은 알려진 값으로 보정. producedFrom·requires=표준 테크트리(검증됨). 프로토스/저그는 아직 최소치(WIP)—M4에서 확정.",
   "harvest": {
     "mineralPerWorker": 0.6666666667,
     "mineralPerWorkerSaturated": 0.3333333333,
@@ -17,88 +17,232 @@
     "command_center": {
       "name": "Command Center", "race": "terran", "category": "building",
       "minerals": 400, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 71,
-      "producedFrom": ["scv"], "note": "buildTime WIP"
+      "producedFrom": ["scv"]
     },
-    "scv": {
-      "name": "SCV", "race": "terran", "category": "worker",
-      "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12,
-      "producedFrom": ["command_center"], "note": "buildTime WIP"
+    "orbital_command": {
+      "name": "Orbital Command", "race": "terran", "category": "building",
+      "minerals": 150, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 25,
+      "producedFrom": ["command_center"], "requires": ["barracks"], "morphedFrom": "command_center",
+      "note": "사령부에서 변태. MULE/지게로봇·스캔·보급소환 에너지 능력은 M3에서 반영."
+    },
+    "planetary_fortress": {
+      "name": "Planetary Fortress", "race": "terran", "category": "building",
+      "minerals": 150, "gas": 150, "supply": 0, "supplyProvided": 15, "buildTime": 36,
+      "producedFrom": ["command_center"], "requires": ["engineering_bay"], "morphedFrom": "command_center"
     },
     "supply_depot": {
       "name": "Supply Depot", "race": "terran", "category": "building",
       "minerals": 100, "gas": 0, "supply": 0, "supplyProvided": 8, "buildTime": 21,
-      "producedFrom": ["scv"], "note": "buildTime WIP"
+      "producedFrom": ["scv"]
     },
     "refinery": {
       "name": "Refinery", "race": "terran", "category": "building",
       "minerals": 75, "gas": 0, "supply": 0, "buildTime": 21,
-      "producedFrom": ["scv"], "note": "buildTime WIP"
+      "producedFrom": ["scv"]
     },
     "barracks": {
       "name": "Barracks", "race": "terran", "category": "building",
       "minerals": 150, "gas": 0, "supply": 0, "buildTime": 46,
-      "producedFrom": ["scv"], "requires": ["supply_depot"], "note": "buildTime WIP"
+      "producedFrom": ["scv"], "requires": ["supply_depot"]
+    },
+    "engineering_bay": {
+      "name": "Engineering Bay", "race": "terran", "category": "building",
+      "minerals": 125, "gas": 0, "supply": 0, "buildTime": 25,
+      "producedFrom": ["scv"], "requires": ["command_center"]
+    },
+    "bunker": {
+      "name": "Bunker", "race": "terran", "category": "building",
+      "minerals": 100, "gas": 0, "supply": 0, "buildTime": 29,
+      "producedFrom": ["scv"], "requires": ["barracks"]
+    },
+    "missile_turret": {
+      "name": "Missile Turret", "race": "terran", "category": "building",
+      "minerals": 100, "gas": 0, "supply": 0, "buildTime": 18,
+      "producedFrom": ["scv"], "requires": ["engineering_bay"]
+    },
+    "sensor_tower": {
+      "name": "Sensor Tower", "race": "terran", "category": "building",
+      "minerals": 100, "gas": 50, "supply": 0, "buildTime": 18,
+      "producedFrom": ["scv"], "requires": ["engineering_bay"]
+    },
+    "factory": {
+      "name": "Factory", "race": "terran", "category": "building",
+      "minerals": 150, "gas": 100, "supply": 0, "buildTime": 43,
+      "producedFrom": ["scv"], "requires": ["barracks"]
+    },
+    "ghost_academy": {
+      "name": "Ghost Academy", "race": "terran", "category": "building",
+      "minerals": 150, "gas": 50, "supply": 0, "buildTime": 29,
+      "producedFrom": ["scv"], "requires": ["barracks"]
+    },
+    "armory": {
+      "name": "Armory", "race": "terran", "category": "building",
+      "minerals": 150, "gas": 50, "supply": 0, "buildTime": 46,
+      "producedFrom": ["scv"], "requires": ["factory"]
+    },
+    "starport": {
+      "name": "Starport", "race": "terran", "category": "building",
+      "minerals": 150, "gas": 100, "supply": 0, "buildTime": 36,
+      "producedFrom": ["scv"], "requires": ["factory"]
+    },
+    "fusion_core": {
+      "name": "Fusion Core", "race": "terran", "category": "building",
+      "minerals": 150, "gas": 150, "supply": 0, "buildTime": 46,
+      "producedFrom": ["scv"], "requires": ["starport"]
+    },
+    "tech_lab": {
+      "name": "Tech Lab", "race": "terran", "category": "building",
+      "minerals": 50, "gas": 25, "supply": 0, "buildTime": 18,
+      "producedFrom": ["barracks", "factory", "starport"],
+      "note": "부속건물. 생산건물에 부착돼 상위유닛 해금. 생산용량 영향은 M3에서."
+    },
+    "reactor": {
+      "name": "Reactor", "race": "terran", "category": "building",
+      "minerals": 50, "gas": 50, "supply": 0, "buildTime": 36,
+      "producedFrom": ["barracks", "factory", "starport"],
+      "note": "부속건물. 동시 2기 생산 허용—생산용량 모델은 M3에서."
+    },
+    "scv": {
+      "name": "SCV", "race": "terran", "category": "worker",
+      "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12,
+      "producedFrom": ["command_center", "orbital_command", "planetary_fortress"]
+    },
+    "mule": {
+      "name": "MULE", "race": "terran", "category": "unit",
+      "minerals": 0, "gas": 0, "supply": 0, "buildTime": 0,
+      "producedFrom": ["orbital_command"],
+      "note": "궤도사령부 50에너지 소환(일시적). 미네랄 채취 보정은 M3에서 반영."
     },
     "marine": {
       "name": "Marine", "race": "terran", "category": "unit",
       "minerals": 50, "gas": 0, "supply": 1, "buildTime": 18,
-      "producedFrom": ["barracks"], "requires": ["barracks"], "note": "buildTime WIP"
+      "producedFrom": ["barracks"], "requires": ["barracks"]
     },
-    "nexus": {
-      "name": "Nexus", "race": "protoss", "category": "building",
-      "minerals": 400, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 71,
-      "producedFrom": ["probe"], "note": "buildTime WIP"
+    "marauder": {
+      "name": "Marauder", "race": "terran", "category": "unit",
+      "minerals": 100, "gas": 25, "supply": 2, "buildTime": 21,
+      "producedFrom": ["barracks"], "requires": ["barracks", "tech_lab"]
+    },
+    "reaper": {
+      "name": "Reaper", "race": "terran", "category": "unit",
+      "minerals": 50, "gas": 50, "supply": 1, "buildTime": 32,
+      "producedFrom": ["barracks"], "requires": ["barracks"]
+    },
+    "ghost": {
+      "name": "Ghost", "race": "terran", "category": "unit",
+      "minerals": 150, "gas": 125, "supply": 2, "buildTime": 29,
+      "producedFrom": ["barracks"], "requires": ["barracks", "ghost_academy", "tech_lab"]
+    },
+    "hellion": {
+      "name": "Hellion", "race": "terran", "category": "unit",
+      "minerals": 100, "gas": 0, "supply": 2, "buildTime": 21,
+      "producedFrom": ["factory"], "requires": ["factory"]
+    },
+    "hellbat": {
+      "name": "Hellbat", "race": "terran", "category": "unit",
+      "minerals": 100, "gas": 0, "supply": 2, "buildTime": 21,
+      "producedFrom": ["factory"], "requires": ["factory", "armory"]
+    },
+    "widow_mine": {
+      "name": "Widow Mine", "race": "terran", "category": "unit",
+      "minerals": 75, "gas": 25, "supply": 2, "buildTime": 21,
+      "producedFrom": ["factory"], "requires": ["factory"]
+    },
+    "siege_tank": {
+      "name": "Siege Tank", "race": "terran", "category": "unit",
+      "minerals": 150, "gas": 125, "supply": 3, "buildTime": 32,
+      "producedFrom": ["factory"], "requires": ["factory", "tech_lab"]
+    },
+    "cyclone": {
+      "name": "Cyclone", "race": "terran", "category": "unit",
+      "minerals": 150, "gas": 100, "supply": 3, "buildTime": 32,
+      "producedFrom": ["factory"], "requires": ["factory", "tech_lab"]
+    },
+    "thor": {
+      "name": "Thor", "race": "terran", "category": "unit",
+      "minerals": 300, "gas": 200, "supply": 6, "buildTime": 43,
+      "producedFrom": ["factory"], "requires": ["factory", "armory"]
+    },
+    "viking": {
+      "name": "Viking", "race": "terran", "category": "unit",
+      "minerals": 125, "gas": 75, "supply": 2, "buildTime": 30,
+      "producedFrom": ["starport"], "requires": ["starport"]
+    },
+    "medivac": {
+      "name": "Medivac", "race": "terran", "category": "unit",
+      "minerals": 100, "gas": 100, "supply": 2, "buildTime": 30,
+      "producedFrom": ["starport"], "requires": ["starport"]
+    },
+    "liberator": {
+      "name": "Liberator", "race": "terran", "category": "unit",
+      "minerals": 150, "gas": 125, "supply": 3, "buildTime": 43,
+      "producedFrom": ["starport"], "requires": ["starport"]
+    },
+    "banshee": {
+      "name": "Banshee", "race": "terran", "category": "unit",
+      "minerals": 150, "gas": 100, "supply": 3, "buildTime": 43,
+      "producedFrom": ["starport"], "requires": ["starport", "tech_lab"]
+    },
+    "raven": {
+      "name": "Raven", "race": "terran", "category": "unit",
+      "minerals": 100, "gas": 150, "supply": 2, "buildTime": 34,
+      "producedFrom": ["starport"], "requires": ["starport", "tech_lab"]
+    },
+    "battlecruiser": {
+      "name": "Battlecruiser", "race": "terran", "category": "unit",
+      "minerals": 400, "gas": 300, "supply": 6, "buildTime": 64,
+      "producedFrom": ["starport"], "requires": ["starport", "tech_lab", "fusion_core"]
     },
     "probe": {
       "name": "Probe", "race": "protoss", "category": "worker",
       "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12,
-      "producedFrom": ["nexus"], "note": "buildTime WIP"
+      "producedFrom": ["nexus"], "note": "WIP—M4"
+    },
+    "nexus": {
+      "name": "Nexus", "race": "protoss", "category": "building",
+      "minerals": 400, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 71,
+      "producedFrom": ["probe"], "note": "WIP—M4"
     },
     "pylon": {
       "name": "Pylon", "race": "protoss", "category": "building",
       "minerals": 100, "gas": 0, "supply": 0, "supplyProvided": 8, "buildTime": 18,
-      "producedFrom": ["probe"], "note": "buildTime WIP"
-    },
-    "assimilator": {
-      "name": "Assimilator", "race": "protoss", "category": "building",
-      "minerals": 75, "gas": 0, "supply": 0, "buildTime": 21,
-      "producedFrom": ["probe"], "note": "buildTime WIP"
+      "producedFrom": ["probe"], "note": "WIP—M4"
     },
     "gateway": {
       "name": "Gateway", "race": "protoss", "category": "building",
       "minerals": 150, "gas": 0, "supply": 0, "buildTime": 46,
-      "producedFrom": ["probe"], "requires": ["pylon"], "note": "buildTime WIP"
+      "producedFrom": ["probe"], "requires": ["pylon"], "note": "WIP—M4"
     },
     "zealot": {
       "name": "Zealot", "race": "protoss", "category": "unit",
       "minerals": 100, "gas": 0, "supply": 2, "buildTime": 27,
-      "producedFrom": ["gateway"], "requires": ["gateway"], "note": "buildTime WIP"
-    },
-    "hatchery": {
-      "name": "Hatchery", "race": "zerg", "category": "building",
-      "minerals": 300, "gas": 0, "supply": 0, "supplyProvided": 6, "buildTime": 71,
-      "producedFrom": ["drone"], "note": "라바 기믹 M4에서 반영. buildTime WIP"
+      "producedFrom": ["gateway"], "requires": ["gateway"], "note": "WIP—M4"
     },
     "drone": {
       "name": "Drone", "race": "zerg", "category": "worker",
       "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12,
-      "producedFrom": ["hatchery"], "morphedFrom": "larva", "note": "라바에서 변태. buildTime WIP"
+      "producedFrom": ["hatchery"], "morphedFrom": "larva", "note": "WIP—라바 기믹 M4"
+    },
+    "hatchery": {
+      "name": "Hatchery", "race": "zerg", "category": "building",
+      "minerals": 300, "gas": 0, "supply": 0, "supplyProvided": 6, "buildTime": 71,
+      "producedFrom": ["drone"], "note": "WIP—M4"
     },
     "overlord": {
       "name": "Overlord", "race": "zerg", "category": "unit",
       "minerals": 100, "gas": 0, "supply": 0, "supplyProvided": 8, "buildTime": 18,
-      "producedFrom": ["hatchery"], "morphedFrom": "larva", "note": "buildTime WIP"
+      "producedFrom": ["hatchery"], "morphedFrom": "larva", "note": "WIP—M4"
     },
     "spawning_pool": {
       "name": "Spawning Pool", "race": "zerg", "category": "building",
       "minerals": 200, "gas": 0, "supply": 0, "buildTime": 46,
-      "producedFrom": ["drone"], "requires": ["hatchery"], "note": "buildTime WIP"
+      "producedFrom": ["drone"], "requires": ["hatchery"], "note": "WIP—M4"
     },
     "zergling": {
       "name": "Zergling", "race": "zerg", "category": "unit",
       "minerals": 25, "gas": 0, "supply": 0.5, "buildTime": 17,
       "producedFrom": ["larva"], "requires": ["spawning_pool"], "morphedFrom": "larva",
-      "note": "라바당 2기 생산(쌍), 개당 0.5보급. 쌍 생산 기믹 M4에서 반영. buildTime WIP"
+      "note": "WIP—라바당 2기(쌍)/개당 0.5보급, 쌍 생산 M4"
     }
   }
 }
