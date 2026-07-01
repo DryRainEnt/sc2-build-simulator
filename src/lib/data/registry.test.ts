@@ -121,4 +121,36 @@ describe("패치 레지스트리 — 실데이터 로드", () => {
     const terran = Object.values(u).filter((x) => x.race === "terran");
     expect(terran.length).toBeGreaterThanOrEqual(30);
   });
+
+  it("3종족 데이터가 모두 완비되어 있다(개수 + 스팟체크)", () => {
+    const u = Object.values(DEFAULT_PATCH.units);
+    const count = (r: string) => u.filter((x) => x.race === r).length;
+    expect(count("terran")).toBeGreaterThanOrEqual(30);
+    expect(count("protoss")).toBeGreaterThanOrEqual(30);
+    expect(count("zerg")).toBeGreaterThanOrEqual(30);
+
+    const m = DEFAULT_PATCH.units;
+    // 프로토스 스팟 (Liquipedia LotV)
+    expect(m.carrier).toMatchObject({ minerals: 350, gas: 250, supply: 6, buildTime: 64 });
+    expect(m.stalker.requires).toEqual(["cybernetics_core"]);
+    expect(m.nexus.supplyProvided).toBe(15);
+    // 저그 스팟 + 변태 관계
+    expect(m.ultralisk).toMatchObject({ minerals: 275, gas: 200, supply: 6 });
+    expect(m.baneling.morphedFrom).toBe("zergling");
+    expect(m.lair.morphedFrom).toBe("hatchery");
+    expect(m.overlord.supplyProvided).toBe(8);
+    // 각 종족 본진은 시작 보유
+    expect(m.nexus.startCount).toBe(1);
+    expect(m.hatchery.startCount).toBe(1);
+  });
+
+  it("모든 종족의 일꾼과 본진 관계가 일관된다", () => {
+    const m = DEFAULT_PATCH.units;
+    expect(m.probe.isWorker).toBe(true);
+    expect(m.drone.isWorker).toBe(true);
+    expect(m.scv.isWorker).toBe(true);
+    // 저그 유닛은 대부분 라바 변태
+    expect(m.roach.morphedFrom).toBe("larva");
+    expect(m.mutalisk.producedFrom).toContain("larva");
+  });
 });
