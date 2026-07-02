@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { summarizeBuild, timelineBars } from "./buildSummary";
+import { summarizeBuild, timelineBars, contiguousBlock } from "./buildSummary";
 import { LOTV_PATCH } from "./data/lotv";
 import type { BuildEvent } from "./engine/types";
 
@@ -101,5 +101,36 @@ describe("timelineBars — 생산(스케줄) + 채취정지 통합 배치", () =
     const pause = bars.find((b) => b.kind === "pause")!;
     expect(prod.lane).not.toBe(pause.lane);
     expect(pause.eventIndex).toBe(1);
+  });
+});
+
+describe("contiguousBlock — 드래그 이동 블록", () => {
+  it("같은 병영에서 back-to-back 연속 큐만 함께 이동", () => {
+    // 병영(0~46) 완성 전 마린 3기 큐잉 → 46~64, 64~82, 82~100 (병영과 연속)
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // idx0
+      { time: 10, kind: "train_unit", unitId: "marine" }, // idx1
+      { time: 10, kind: "train_unit", unitId: "marine" }, // idx2
+      { time: 10, kind: "train_unit", unitId: "marine" }, // idx3
+    ];
+    const bars = timelineBars(events, LOTV_PATCH);
+    const firstMarine = bars.find((b) => b.unitId === "marine")!;
+    // 첫 마린을 잡으면 뒤의 두 마린도 함께 (연속)
+    expect(contiguousBlock(bars, firstMarine).sort()).toEqual([1, 2, 3]);
+    // 병영 건설바를 잡으면 건설 + 그 뒤 마린 전부
+    const barracksBar = bars.find((b) => b.unitId === "barracks")!;
+    expect(contiguousBlock(bars, barracksBar).sort()).toEqual([0, 1, 2, 3]);
+  });
+
+  it("틈(idle)이 있으면 거기서 블록이 끊긴다", () => {
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // 완성 46
+      { time: 50, kind: "train_unit", unitId: "marine" }, // 50~68
+      { time: 200, kind: "train_unit", unitId: "marine" }, // 200~ (틈 큼)
+    ];
+    const bars = timelineBars(events, LOTV_PATCH, "terran");
+    const firstMarine = bars.filter((b) => b.unitId === "marine").sort((a, b) => a.start - b.start)[0];
+    // 두 마린 사이 유휴 → 첫 마린만
+    expect(contiguousBlock(bars, firstMarine)).toEqual([firstMarine.eventIndex]);
   });
 });

@@ -144,6 +144,17 @@ export function setPauseDuration(side: Side, index: number, duration: number): v
   });
 }
 
+/** 여러 이벤트의 시각을 한 번에 설정 (큐 블록 드래그 이동). 최소 0초. */
+export function setEventTimes(side: Side, updates: { index: number; time: number }[]): void {
+  factions.update((f) => {
+    const evs = [...f[side].events];
+    for (const { index, time } of updates) {
+      if (evs[index]) evs[index] = { ...evs[index], time: Math.max(0, Math.round(time)) };
+    }
+    return { ...f, [side]: { ...f[side], events: evs } };
+  });
+}
+
 /** 인덱스로 이벤트 1개 제거 (기간 막대 등 특정 이벤트 지정 삭제). */
 export function removeEventByIndex(side: Side, index: number): void {
   factions.update((f) => {

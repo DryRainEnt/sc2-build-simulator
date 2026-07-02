@@ -14,10 +14,11 @@
     removeOneEvent,
     removeEventByIndex,
     setPauseDuration,
+    setEventTimes,
   } from "../stores/sim";
   import type { BuildEvent, ResourceState } from "../engine/types";
   import type { Side } from "../stores/sim";
-  import { summarizeBuild, timelineBars } from "../buildSummary";
+  import { summarizeBuild, timelineBars, contiguousBlock, type TimelineBar } from "../buildSummary";
   import { unitIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
   import ResourceReadout from "./ResourceReadout.svelte";
@@ -57,6 +58,45 @@
     if (!drag) return;
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
     drag = null;
+    e.stopPropagation();
+  }
+
+  // 생산 막대 드래그: 같은 건물의 연속(back-to-back) 블록을 함께 이동. 안 움직이면 클릭=제거.
+  let prodDrag:
+    | { side: Side; block: number[]; origTimes: number[]; anchorStart: number; y0: number; moved: boolean }
+    | null = null;
+  function prodDown(side: Side, bar: TimelineBar, e: PointerEvent) {
+    const bars = side === "left" ? leftBars : rightBars;
+    const block = contiguousBlock(bars, bar);
+    const evs = $factions[side].events;
+    prodDrag = {
+      side,
+      block,
+      origTimes: block.map((i) => evs[i].time),
+      anchorStart: bar.start,
+      y0: e.clientY,
+      moved: false,
+    };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    e.stopPropagation();
+  }
+  function prodMove(e: PointerEvent) {
+    if (!prodDrag) return;
+    if (Math.abs(e.clientY - prodDrag.y0) > 4) prodDrag.moved = true;
+    if (!prodDrag.moved) return;
+    const delta = yToTime(e.clientY) - prodDrag.anchorStart;
+    setEventTimes(
+      prodDrag.side,
+      prodDrag.block.map((idx, k) => ({ index: idx, time: prodDrag!.origTimes[k] + delta })),
+    );
+    e.stopPropagation();
+  }
+  function prodUp(side: Side, bar: TimelineBar, e: PointerEvent) {
+    if (!prodDrag) return;
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    const wasClick = !prodDrag.moved;
+    prodDrag = null;
+    if (wasClick) removeEventByIndex(side, bar.eventIndex);
     e.stopPropagation();
   }
 
@@ -146,7 +186,7 @@
       <div class="prod left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
         <div class="prod-dot" title="완료 {bar.end}s"></div>
-        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 클릭: 제거" on:click|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)}>
+        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 드래그: 블록 이동 · 클릭: 제거" on:pointerdown={(e) => prodDown("left", bar, e)} on:pointermove={prodMove} on:pointerup={(e) => prodUp("left", bar, e)} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
         </button>
       </div>
@@ -167,7 +207,7 @@
       <div class="prod right" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
         <div class="prod-dot" title="완료 {bar.end}s"></div>
-        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 클릭: 제거" on:click|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)}>
+        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 드래그: 블록 이동 · 클릭: 제거" on:pointerdown={(e) => prodDown("right", bar, e)} on:pointermove={prodMove} on:pointerup={(e) => prodUp("right", bar, e)} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
         </button>
       </div>
@@ -397,12 +437,16 @@
     border: 1px solid #0004;
     border-radius: 6px;
     background: #fff;
-    cursor: pointer;
+    cursor: grab;
+    touch-action: none;
     box-shadow: 0 1px 2px #0003;
   }
+  .prod-icon:active {
+    cursor: grabbing;
+  }
   .prod-icon:hover {
-    border-color: #ef4444;
-    background: #fee2e2;
+    border-color: #2563eb;
+    background: #dbeafe;
   }
   /* 생산 큐 대기선 (주문~실제시작, 건물 바쁨) */
   .prod-wait {

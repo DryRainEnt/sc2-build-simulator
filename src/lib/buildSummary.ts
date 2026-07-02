@@ -141,6 +141,29 @@ export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race 
   return [...facilityBars, ...miscBars];
 }
 
+/**
+ * 드래그 이동 대상 = 대상 막대 + 같은 건물에서 틈 없이(back-to-back) 뒤에 붙은 생산들.
+ * @returns 이동할 이벤트들의 eventIndex 배열
+ */
+export function contiguousBlock(bars: TimelineBar[], bar: TimelineBar): number[] {
+  const EPS = 0.01;
+  if (!bar.machineId) return [bar.eventIndex];
+  const chain = bars
+    .filter((b) => b.kind === "prod" && b.machineId === bar.machineId)
+    .sort((a, b) => a.start - b.start);
+  const at = chain.findIndex((b) => b.eventIndex === bar.eventIndex);
+  if (at < 0) return [bar.eventIndex];
+  const block = [chain[at].eventIndex];
+  let prevEnd = chain[at].end;
+  for (let j = at + 1; j < chain.length; j++) {
+    if (chain[j].start <= prevEnd + EPS) {
+      block.push(chain[j].eventIndex);
+      prevEnd = chain[j].end;
+    } else break;
+  }
+  return block;
+}
+
 export function summarizeBuild(events: BuildEvent[], patch: PatchData): BuildChipGroup[] {
   const byTime = new Map<number, Map<string, BuildChipItem>>();
   for (const e of events) {
