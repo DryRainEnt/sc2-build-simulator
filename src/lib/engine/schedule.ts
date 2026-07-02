@@ -92,6 +92,30 @@ export function scheduleProduction(
     buildMachineId.set(i, m.id);
   });
 
+  // 리액터: 호환 생산건물(barracks/factory/starport)에 자동 부착 → 동시 2기(2번째 슬롯).
+  // 리액터 완성 시각에, 아직 리액터 없는 가장 이른 호환 건물에 붙는다.
+  const reactorDef = patch.units["reactor"];
+  if (reactorDef) {
+    const reactored = new Set<string>();
+    const reactors = events
+      .filter((e): e is Extract<BuildEvent, { kind: "build_structure" }> =>
+        e.kind === "build_structure" && (e as { unitId: string }).unitId === "reactor",
+      )
+      .map((e) => e.time + reactorDef.buildTime)
+      .sort((a, b) => a - b);
+    for (const completion of reactors) {
+      let target: Machine | undefined;
+      for (const type of reactorDef.producedFrom ?? []) {
+        target = (machinesByType.get(type) ?? []).find((m) => !reactored.has(m.id));
+        if (target) break;
+      }
+      if (!target) continue;
+      reactored.add(target.id);
+      const arr = machinesByType.get(target.type)!;
+      arr.push({ id: `${target.id}·R`, type: target.type, freeTime: Math.max(completion, target.freeTime) });
+    }
+  }
+
   // 생산 이벤트를 큐 순서(주문 시각, 동시간은 원본 순서)로 배정
   const prod = events
     .map((e, i) => ({ e, i }))
