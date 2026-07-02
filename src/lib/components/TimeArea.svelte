@@ -29,13 +29,9 @@
   const isChipAction = (e: BuildEvent) =>
     e.kind === "assign_worker" || e.kind === "unit_death";
 
-  // 생산 막대 제거 시 매칭할 이벤트 종류 (건물=build_structure, 그 외=train_unit)
-  const prodKind = (unitId: string): BuildEvent["kind"] =>
-    $patch.units[unitId]?.category === "building" ? "build_structure" : "train_unit";
-
-  // 생산/건설/정지 = 기간 막대(한 레인 체계), 배치/사망 = 순간 칩
-  $: leftBars = timelineBars($factions.left.events, $patch);
-  $: rightBars = timelineBars($factions.right.events, $patch);
+  // 생산/건설/정지 = 기간 막대(한 레인 체계, 실제 시작~완료), 배치/사망 = 순간 칩
+  $: leftBars = timelineBars($factions.left.events, $patch, $factions.left.race);
+  $: rightBars = timelineBars($factions.right.events, $patch, $factions.right.race);
   $: leftActions = summarizeBuild($factions.left.events.filter(isChipAction), $patch);
   $: rightActions = summarizeBuild($factions.right.events.filter(isChipAction), $patch);
 
@@ -141,42 +137,46 @@
     <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px"><ResourceReadout s={rs} /></div>
   {/each}
 
-  <!-- 기간 막대: 생산(아이콘→원) / 채취정지(드래그 가능한 구간) -->
-  {#each leftBars as bar}
+  <!-- 기간 막대: 생산(대기선→아이콘→완료원) / 채취정지(드래그 구간) -->
+  {#each leftBars as bar (bar.kind + bar.eventIndex)}
     {#if bar.kind === "prod"}
-      <div class="prod left" style="top: {timeToPx(bar.time)}px; height: {timeToPx(bar.end - bar.time)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
+      {#if bar.orderTime < bar.start}
+        <div class="prod-wait" style="top: {timeToPx(bar.orderTime)}px; height: {timeToPx(bar.start - bar.orderTime)}px; right: calc(50% + {laneOffset(bar.lane)}px)" title="큐 대기 {bar.orderTime}s → 시작 {bar.start}s"></div>
+      {/if}
+      <div class="prod left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
         <div class="prod-dot" title="완료 {bar.end}s"></div>
-        <button class="prod-icon" title="{bar.label} · {bar.time}s → {bar.end}s{(bar.count ?? 0) > 1 ? ` ×${bar.count}` : ''} · 클릭: 1개 제거" on:click|stopPropagation={() => removeOneEvent("left", bar.time, prodKind(bar.unitId ?? ""), bar.unitId)}>
+        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 클릭: 제거" on:click|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
-          {#if (bar.count ?? 0) > 1}<span class="cnt">{bar.count}</span>{/if}
         </button>
       </div>
     {:else}
-      <div class="pause left" style="top: {timeToPx(bar.time)}px; height: {timeToPx(bar.end - bar.time)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
+      <div class="pause left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="pause-stem"></div>
-        <button class="pause-node start" title="채취정지 시작 {bar.time}s · 클릭: 삭제" on:click|stopPropagation={() => removeEventByIndex("left", (bar.eventIndex ?? -1))}></button>
-        <button class="pause-node end" title="정지 해제 {bar.end}s (지속 {bar.end - bar.time}s) · 드래그로 조절" on:pointerdown={(e) => startDrag("left", (bar.eventIndex ?? -1), bar.time, e)} on:pointermove={moveDrag} on:pointerup={endDrag} on:click|stopPropagation={() => {}}></button>
-        <div class="pause-label">정지 {bar.end - bar.time}s</div>
+        <button class="pause-node start" title="채취정지 시작 {bar.start}s · 클릭: 삭제" on:click|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)}></button>
+        <button class="pause-node end" title="정지 해제 {bar.end}s (지속 {bar.end - bar.start}s) · 드래그로 조절" on:pointerdown={(e) => startDrag("left", bar.eventIndex, bar.start, e)} on:pointermove={moveDrag} on:pointerup={endDrag} on:click|stopPropagation={() => {}}></button>
+        <div class="pause-label">정지 {bar.end - bar.start}s</div>
       </div>
     {/if}
   {/each}
-  {#each rightBars as bar}
+  {#each rightBars as bar (bar.kind + bar.eventIndex)}
     {#if bar.kind === "prod"}
-      <div class="prod right" style="top: {timeToPx(bar.time)}px; height: {timeToPx(bar.end - bar.time)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
+      {#if bar.orderTime < bar.start}
+        <div class="prod-wait" style="top: {timeToPx(bar.orderTime)}px; height: {timeToPx(bar.start - bar.orderTime)}px; left: calc(50% + {laneOffset(bar.lane)}px)" title="큐 대기 {bar.orderTime}s → 시작 {bar.start}s"></div>
+      {/if}
+      <div class="prod right" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
         <div class="prod-dot" title="완료 {bar.end}s"></div>
-        <button class="prod-icon" title="{bar.label} · {bar.time}s → {bar.end}s{(bar.count ?? 0) > 1 ? ` ×${bar.count}` : ''} · 클릭: 1개 제거" on:click|stopPropagation={() => removeOneEvent("right", bar.time, prodKind(bar.unitId ?? ""), bar.unitId)}>
+        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 클릭: 제거" on:click|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
-          {#if (bar.count ?? 0) > 1}<span class="cnt">{bar.count}</span>{/if}
         </button>
       </div>
     {:else}
-      <div class="pause right" style="top: {timeToPx(bar.time)}px; height: {timeToPx(bar.end - bar.time)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
+      <div class="pause right" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="pause-stem"></div>
-        <button class="pause-node start" title="채취정지 시작 {bar.time}s · 클릭: 삭제" on:click|stopPropagation={() => removeEventByIndex("right", (bar.eventIndex ?? -1))}></button>
-        <button class="pause-node end" title="정지 해제 {bar.end}s (지속 {bar.end - bar.time}s) · 드래그로 조절" on:pointerdown={(e) => startDrag("right", (bar.eventIndex ?? -1), bar.time, e)} on:pointermove={moveDrag} on:pointerup={endDrag} on:click|stopPropagation={() => {}}></button>
-        <div class="pause-label">정지 {bar.end - bar.time}s</div>
+        <button class="pause-node start" title="채취정지 시작 {bar.start}s · 클릭: 삭제" on:click|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)}></button>
+        <button class="pause-node end" title="정지 해제 {bar.end}s (지속 {bar.end - bar.start}s) · 드래그로 조절" on:pointerdown={(e) => startDrag("right", bar.eventIndex, bar.start, e)} on:pointermove={moveDrag} on:pointerup={endDrag} on:click|stopPropagation={() => {}}></button>
+        <div class="pause-label">정지 {bar.end - bar.start}s</div>
       </div>
     {/if}
   {/each}
@@ -404,20 +404,12 @@
     border-color: #ef4444;
     background: #fee2e2;
   }
-  .prod-icon .cnt {
+  /* 생산 큐 대기선 (주문~실제시작, 건물 바쁨) */
+  .prod-wait {
     position: absolute;
-    right: -5px;
-    top: -5px;
-    min-width: 14px;
-    height: 14px;
-    padding: 0 3px;
-    border-radius: 7px;
-    background: #2563eb;
-    color: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    line-height: 14px;
-    text-align: center;
+    width: 0;
+    border-left: 2px dotted #cbd5e1;
+    z-index: 2;
   }
   /* 채취정지 구간 (드래그로 기간 조절) */
   .pause {

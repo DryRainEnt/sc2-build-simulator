@@ -1,4 +1,5 @@
-import type { BuildEvent, PatchData } from "./engine/types";
+import type { BuildEvent, PatchData, Race } from "./engine/types";
+import { scheduleProduction } from "./engine/schedule";
 
 // 배치된 빌드 이벤트를 "시각별 라벨 칩"으로 요약한다 (시간선에 표시·편집용).
 // 같은 시각의 동일 항목은 하나의 칩으로 묶고 개수를 센다(생산 큐 중첩 시각화).
@@ -44,33 +45,31 @@ function describe(e: BuildEvent, patch: PatchData): { key: string; label: string
   }
 }
 
-// ── 기간 막대 (시작→완료 범위 표시) ─────────────────────────────────────
-// 생산/건설 = 아이콘+완료원, 채취정지 = 드래그 가능한 정지 구간.
+// ── 기간 막대 (실제 시작→완료 범위 표시) ────────────────────────────────
+// 생산/건설 = 아이콘(시작)+완료원, 채취정지 = 드래그 가능한 정지 구간.
+// 생산 시작은 스케줄러(슬롯 배정)로 계산 — 건물 바쁘면 마커보다 아래로 밀림.
 export interface TimelineBar {
   kind: "prod" | "pause";
-  time: number; // 시작 시각
-  end: number; // 완료/해제 시각
+  start: number; // 막대 시작 시각(prod: 실제 생산 시작, pause: 정지 시작)
+  end: number; // 막대 끝 시각
+  orderTime: number; // 주문(마커) 시각 = 자원 소모 지점
   lane: number; // 겹침 회피용 가로 레인(0=중앙축에 가장 가까움)
+  eventIndex: number; // faction.events 내 원본 인덱스(삭제/드래그용)
   // prod 전용
   label?: string;
   unitId?: string;
-  count?: number;
+  machineId?: string; // "종류#idx" (같은 건물 큐 체인 식별)
+  isBuilding?: boolean;
   // pause 전용
-  eventIndex?: number; // faction.events 내 원본 인덱스(드래그/삭제용)
   workers?: number;
 }
 
-/** ProdBar는 하위호환용 별칭 (prod 막대만). */
-export type ProdBar = Required<Pick<TimelineBar, "time" | "end" | "label" | "unitId" | "count" | "lane">>;
-
-const PROD_KINDS = new Set(["train_unit", "build_structure"]);
-
 /** 시간 구간이 겹치는 막대를 서로 다른 레인에 배치(그리디 구간 분할). */
-function packLanes<T extends { time: number; end: number; lane: number }>(items: T[]): T[] {
-  const sorted = items.sort((a, b) => a.time - b.time || a.end - b.end);
+function packLanes<T extends { start: number; end: number; lane: number }>(items: T[]): T[] {
+  const sorted = items.sort((a, b) => a.start - b.start || a.end - b.end);
   const laneEnds: number[] = [];
   for (const it of sorted) {
-    let lane = laneEnds.findIndex((end) => end <= it.time);
+    let lane = laneEnds.findIndex((end) => end <= it.start);
     if (lane === -1) {
       lane = laneEnds.length;
       laneEnds.push(it.end);
@@ -82,52 +81,37 @@ function packLanes<T extends { time: number; end: number; lane: number }>(items:
   return sorted;
 }
 
-/** 생산/건설 이벤트를 (시각,유닛)별로 묶어 막대 후보로. */
-function prodGroups(events: BuildEvent[], patch: PatchData): TimelineBar[] {
-  const groups = new Map<string, TimelineBar>();
-  for (const e of events) {
-    if (!PROD_KINDS.has(e.kind)) continue;
-    const unitId = (e as { unitId: string }).unitId;
-    const def = patch.units[unitId];
-    if (!def) continue;
-    const key = `${e.time}|${unitId}`;
-    const g = groups.get(key);
-    if (g) g.count! += 1;
-    else
-      groups.set(key, {
-        kind: "prod",
-        time: e.time,
-        end: e.time + def.buildTime,
-        label: def.name,
-        unitId,
-        count: 1,
-        lane: 0,
-      });
+/** 생산(스케줄된 시작~완료) + 채취정지 막대를 한 레인 체계로 배치. */
+export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race = "terran"): TimelineBar[] {
+  const bars: TimelineBar[] = [];
+  for (const s of scheduleProduction(events, patch, race)) {
+    bars.push({
+      kind: "prod",
+      start: s.start,
+      end: s.end,
+      orderTime: s.orderTime,
+      lane: 0,
+      eventIndex: s.eventIndex,
+      label: patch.units[s.unitId]?.name ?? s.unitId,
+      unitId: s.unitId,
+      machineId: s.machineId,
+      isBuilding: s.isBuilding,
+    });
   }
-  return [...groups.values()];
-}
-
-/** 생산 막대만 (하위호환·테스트용). */
-export function productionLayout(events: BuildEvent[], patch: PatchData): ProdBar[] {
-  return packLanes(prodGroups(events, patch)) as ProdBar[];
-}
-
-/** 생산 막대 + 채취정지 막대를 한 레인 체계로 함께 배치(서로 겹치지 않음). */
-export function timelineBars(events: BuildEvent[], patch: PatchData): TimelineBar[] {
-  const pauses: TimelineBar[] = [];
   events.forEach((e, i) => {
     if (e.kind === "worker_transfer") {
-      pauses.push({
+      bars.push({
         kind: "pause",
-        time: e.time,
+        start: e.time,
         end: e.time + e.duration,
+        orderTime: e.time,
         lane: 0,
         eventIndex: i,
         workers: e.workers,
       });
     }
   });
-  return packLanes([...prodGroups(events, patch), ...pauses]);
+  return packLanes(bars);
 }
 
 export function summarizeBuild(events: BuildEvent[], patch: PatchData): BuildChipGroup[] {

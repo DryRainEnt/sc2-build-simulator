@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { summarizeBuild, productionLayout, timelineBars } from "./buildSummary";
+import { summarizeBuild, timelineBars } from "./buildSummary";
 import { LOTV_PATCH } from "./data/lotv";
 import type { BuildEvent } from "./engine/types";
 
@@ -41,58 +41,34 @@ describe("summarizeBuild — 빌드 칩 요약", () => {
   });
 });
 
-describe("productionLayout — 기간 막대 배치", () => {
-  it("시작→완료 범위를 buildTime으로 계산하고 동일 항목은 개수로 묶는다", () => {
+describe("timelineBars — 생산(스케줄) + 채취정지 통합 배치", () => {
+  it("각 생산은 하나의 막대(스케줄된 실제 시작~완료), 개수 묶음 없음", () => {
     const events: BuildEvent[] = [
       { time: 10, kind: "train_unit", unitId: "marine" },
       { time: 10, kind: "train_unit", unitId: "marine" },
-      { time: 10, kind: "train_unit", unitId: "marine" },
     ];
-    const bars = productionLayout(events, LOTV_PATCH);
-    expect(bars).toHaveLength(1);
-    expect(bars[0]).toMatchObject({ time: 10, end: 28, count: 3, unitId: "marine", lane: 0 });
+    // 병영 없음 → 폴백으로 둘 다 주문시각 시작(같은 슬롯 아님)
+    const bars = timelineBars(events, LOTV_PATCH);
+    expect(bars.filter((b) => b.kind === "prod")).toHaveLength(2);
+    expect(bars[0]).toMatchObject({ kind: "prod", start: 10, end: 28, orderTime: 10, unitId: "marine" });
   });
 
-  it("시간이 겹치는 서로 다른 생산은 다른 레인에 배치", () => {
+  it("건물 바쁘면 막대가 밀리고 orderTime<start (큐 대기)", () => {
     const events: BuildEvent[] = [
-      { time: 0, kind: "build_structure", unitId: "barracks" }, // 0~46
-      { time: 10, kind: "train_unit", unitId: "marine" }, // 10~28 (겹침)
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // 완성 46
+      { time: 10, kind: "train_unit", unitId: "marine" }, // 주문 10 → 시작 46
     ];
-    const bars = productionLayout(events, LOTV_PATCH);
-    const barracks = bars.find((b) => b.unitId === "barracks")!;
-    const marine = bars.find((b) => b.unitId === "marine")!;
-    expect(barracks.lane).toBe(0);
-    expect(marine.lane).toBe(1);
+    const marine = timelineBars(events, LOTV_PATCH).find((b) => b.unitId === "marine")!;
+    expect(marine.orderTime).toBe(10);
+    expect(marine.start).toBe(46);
+    expect(marine.end).toBe(64);
   });
 
-  it("시간이 안 겹치면 같은 레인 재사용", () => {
-    const events: BuildEvent[] = [
-      { time: 0, kind: "train_unit", unitId: "marine" }, // 0~18
-      { time: 50, kind: "train_unit", unitId: "marine" }, // 50~68
-    ];
-    const bars = productionLayout(events, LOTV_PATCH);
-    expect(bars.every((b) => b.lane === 0)).toBe(true);
-  });
-
-  it("행동 이벤트는 막대에서 제외", () => {
-    const events: BuildEvent[] = [
-      { time: 0, kind: "assign_worker", workers: 3, to: "gas" },
-      { time: 5, kind: "train_unit", unitId: "marine" },
-    ];
-    const bars = productionLayout(events, LOTV_PATCH);
-    expect(bars).toHaveLength(1);
-    expect(bars[0].unitId).toBe("marine");
-  });
-});
-
-describe("timelineBars — 생산 + 채취정지 통합 배치", () => {
   it("정지 이벤트를 [시작,시작+지속] 막대로, 원본 인덱스 보존", () => {
-    const events: BuildEvent[] = [
-      { time: 5, kind: "worker_transfer", workers: 1, duration: 8 },
-    ];
+    const events: BuildEvent[] = [{ time: 5, kind: "worker_transfer", workers: 1, duration: 8 }];
     const bars = timelineBars(events, LOTV_PATCH);
     expect(bars).toHaveLength(1);
-    expect(bars[0]).toMatchObject({ kind: "pause", time: 5, end: 13, eventIndex: 0, workers: 1 });
+    expect(bars[0]).toMatchObject({ kind: "pause", start: 5, end: 13, eventIndex: 0, workers: 1 });
   });
 
   it("생산과 정지가 시간상 겹치면 서로 다른 레인", () => {

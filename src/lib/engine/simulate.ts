@@ -1,4 +1,5 @@
 import { gasIncomePerSec, mineralIncomePerSec } from "./harvest";
+import { scheduleProduction } from "./schedule";
 import type {
   BuildEvent,
   PatchData,
@@ -55,29 +56,36 @@ function findWorker(patch: PatchData, race: Race): UnitDef {
   return w;
 }
 
-/** 이벤트 목록을 시각별 op 목록으로 전개. */
-function buildOps(events: BuildEvent[], patch: PatchData, race: Race, duration: number): Op[] {
+/** 이벤트 목록을 시각별 op 목록으로 전개. completeAt: eventIndex→실제 완료 시각(스케줄). */
+function buildOps(
+  events: BuildEvent[],
+  patch: PatchData,
+  race: Race,
+  duration: number,
+  completeAt: Map<number, number>,
+): Op[] {
   const ops: Op[] = [];
   const push = (op: Op) => {
     if (op.t <= duration) ops.push(op);
   };
 
-  const emitProduction = (t: number, def: UnitDef) => {
-    // 주문 시점에 자원 + 보급(인구) 소모, 완성 시점에 유닛 등장/보급 공급.
+  // 주문 시점(마커)에 자원+보급 소모, 스케줄된 완료 시점에 유닛 등장/보급 공급.
+  const emitProduction = (index: number, t: number, def: UnitDef) => {
     push({ t, type: "spend", minerals: def.minerals, gas: def.gas, supply: def.supply });
-    push({ t: t + def.buildTime, type: "complete", def });
+    const completeTime = completeAt.get(index) ?? t + def.buildTime;
+    push({ t: completeTime, type: "complete", def });
   };
 
-  for (const e of events) {
+  events.forEach((e, i) => {
     switch (e.kind) {
       case "train_worker":
-        emitProduction(e.time, findWorker(patch, race));
+        emitProduction(i, e.time, findWorker(patch, race));
         break;
       case "train_unit":
       case "build_structure": {
         const def = patch.units[e.unitId];
         if (!def) throw new Error(`알 수 없는 유닛 id: ${e.unitId}`);
-        emitProduction(e.time, def);
+        emitProduction(i, e.time, def);
         break;
       }
       case "worker_transfer": {
@@ -97,7 +105,7 @@ function buildOps(events: BuildEvent[], patch: PatchData, race: Race, duration: 
         break;
       }
     }
-  }
+  });
 
   // 시각 오름차순 정렬 (동일 시각은 삽입 순서 유지 = 안정 정렬).
   return ops
@@ -123,7 +131,11 @@ export function simulate(
   const patches = patch.base.mineralPatches;
   const geysers = patch.base.geysers;
 
-  const ops = buildOps(events, patch, race, duration);
+  // 생산 스케줄(슬롯 배정)로 각 유닛의 실제 완료 시각 계산.
+  const completeAt = new Map<number, number>();
+  for (const s of scheduleProduction(events, patch, race)) completeAt.set(s.eventIndex, s.end);
+
+  const ops = buildOps(events, patch, race, duration, completeAt);
 
   const perTripMin = model.mineralsPerTrip;
   const perTripGas = model.gasPerTrip;
