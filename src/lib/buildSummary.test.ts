@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { summarizeBuild, productionLayout } from "./buildSummary";
+import { summarizeBuild, productionLayout, timelineBars } from "./buildSummary";
 import { LOTV_PATCH } from "./data/lotv";
 import type { BuildEvent } from "./engine/types";
 
@@ -82,5 +82,28 @@ describe("productionLayout — 기간 막대 배치", () => {
     const bars = productionLayout(events, LOTV_PATCH);
     expect(bars).toHaveLength(1);
     expect(bars[0].unitId).toBe("marine");
+  });
+});
+
+describe("timelineBars — 생산 + 채취정지 통합 배치", () => {
+  it("정지 이벤트를 [시작,시작+지속] 막대로, 원본 인덱스 보존", () => {
+    const events: BuildEvent[] = [
+      { time: 5, kind: "worker_transfer", workers: 1, duration: 8 },
+    ];
+    const bars = timelineBars(events, LOTV_PATCH);
+    expect(bars).toHaveLength(1);
+    expect(bars[0]).toMatchObject({ kind: "pause", time: 5, end: 13, eventIndex: 0, workers: 1 });
+  });
+
+  it("생산과 정지가 시간상 겹치면 서로 다른 레인", () => {
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // 0~46
+      { time: 10, kind: "worker_transfer", workers: 1, duration: 20 }, // 10~30 (겹침)
+    ];
+    const bars = timelineBars(events, LOTV_PATCH);
+    const prod = bars.find((b) => b.kind === "prod")!;
+    const pause = bars.find((b) => b.kind === "pause")!;
+    expect(prod.lane).not.toBe(pause.lane);
+    expect(pause.eventIndex).toBe(1);
   });
 });

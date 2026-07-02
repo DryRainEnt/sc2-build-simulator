@@ -37,7 +37,8 @@
 
   const actions = [
     { id: "gas1", label: "가스 일꾼 +1" },
-    { id: "pause", label: "채취정지 10s" },
+    { id: "min1", label: "미네랄 복귀 +1" },
+    { id: "pause", label: "채취 정지" },
     { id: "death", label: "일꾼 사망" },
   ];
 
@@ -84,8 +85,12 @@
       case "gas1":
         queueAssign(side, cur, 1, "gas");
         break;
+      case "min1":
+        queueAssign(side, cur, 1, "minerals");
+        break;
       case "pause":
-        queueTransfer(side, cur, 3, 10);
+        // 기본 5초 정지 → 끝 노드를 드래그해 이동거리만큼 조절
+        queueTransfer(side, cur, 1, 5);
         break;
       case "death":
         queueDeath(side, cur, "worker", 1);

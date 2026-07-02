@@ -131,3 +131,24 @@ export function queueTransfer(side: Side, marker: number, workers: number, dur: 
 export function queueDeath(side: Side, marker: number, unitId: string, count: number): void {
   addEvent(side, { time: marker, kind: "unit_death", unitId, count });
 }
+
+/** 채취정지 이벤트의 지속시간 변경 (끝 노드 드래그). 최소 1초. */
+export function setPauseDuration(side: Side, index: number, duration: number): void {
+  factions.update((f) => {
+    const evs = [...f[side].events];
+    const e = evs[index];
+    if (e && e.kind === "worker_transfer") {
+      evs[index] = { ...e, duration: Math.max(1, Math.round(duration)) };
+    }
+    return { ...f, [side]: { ...f[side], events: evs } };
+  });
+}
+
+/** 인덱스로 이벤트 1개 제거 (기간 막대 등 특정 이벤트 지정 삭제). */
+export function removeEventByIndex(side: Side, index: number): void {
+  factions.update((f) => {
+    const evs = [...f[side].events];
+    if (index >= 0 && index < evs.length) evs.splice(index, 1);
+    return { ...f, [side]: { ...f[side], events: evs } };
+  });
+}
