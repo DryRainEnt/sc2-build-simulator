@@ -71,6 +71,26 @@ describe("timelineBars — 생산(스케줄) + 채취정지 통합 배치", () =
     expect(bars[0]).toMatchObject({ kind: "pause", start: 5, end: 13, eventIndex: 0, workers: 1 });
   });
 
+  it("건물 인스턴스마다 고정 트랙: 같은 병영의 건설바+유닛이 같은 열, 다른 병영은 다른 열", () => {
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // barracks#0
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // barracks#1
+      { time: 50, kind: "train_unit", unitId: "marine" }, // → 병영#0
+      { time: 50, kind: "train_unit", unitId: "marine" }, // → 병영#1
+    ];
+    const bars = timelineBars(events, LOTV_PATCH).filter((b) => b.kind === "prod");
+    const barracks = bars.filter((b) => b.unitId === "barracks");
+    const marines = bars.filter((b) => b.unitId === "marine");
+    // 병영 2개 = 2개 트랙(레인)
+    expect(new Set(barracks.map((b) => b.lane)).size).toBe(2);
+    // 두 마린은 서로 다른 병영 열에 배정
+    expect(marines[0].lane).not.toBe(marines[1].lane);
+    // 각 마린 열 == 어떤 병영 열
+    const barracksLanes = new Set(barracks.map((b) => b.lane));
+    expect(barracksLanes.has(marines[0].lane)).toBe(true);
+    expect(barracksLanes.has(marines[1].lane)).toBe(true);
+  });
+
   it("생산과 정지가 시간상 겹치면 서로 다른 레인", () => {
     const events: BuildEvent[] = [
       { time: 0, kind: "build_structure", unitId: "barracks" }, // 0~46

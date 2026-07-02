@@ -6,10 +6,13 @@ import type { BuildEvent, PatchData, Race, UnitDef } from "./types";
 // 인스턴스 중 "가장 빨리 비는 곳"에 배정되고, 그 시각(가장 빠른 가능 시작)부터 생산된다.
 // 자원/보급 소모는 주문(마커) 시점(엔진의 spend), 실제 생산은 여기서 계산한 start~end.
 //
+// 트랙 모델: 각 건물 인스턴스 = 고정 machineId("종류#idx", 생성 순서). 그 건물의 건설바와
+// 거기서 나온 유닛들은 같은 machineId(=같은 열)를 공유한다.
+//
 // 규칙/근사:
-// - 건물 건설(build_structure)은 슬롯 스케줄링 대상이 아님(일꾼은 여유 있다고 가정) → 마커 시각에 시작.
+// - 건물 건설(build_structure)은 슬롯 스케줄링 대상이 아님(일꾼 여유 가정) → 마커 시각 시작.
 // - 변태 건물(morphedFrom)은 새 인스턴스를 추가하지 않음(기존 건물이 변형된 것).
-// - 저그 애벌레(morphedFrom "larva")·차원관문 쿨다운·리액터는 후속 Phase.
+// - 저그 애벌레·차원관문 쿨다운·리액터는 후속 Phase.
 
 export interface ScheduledProd {
   eventIndex: number; // events 배열 내 원본 인덱스
@@ -17,12 +20,18 @@ export interface ScheduledProd {
   orderTime: number; // 주문(마커) 시각 = 자원 소모 시점
   start: number; // 실제 생산 시작 (슬롯 비는 시각)
   end: number; // 완료 = start + buildTime
-  facility: string; // 사용한 건물 종류 (건물/무시설이면 "")
-  machineId: string; // "종류#인덱스" (체인/드래그 식별용, 없으면 "")
+  facility: string; // 사용/생성한 건물 종류 (무시설이면 "")
+  machineId: string; // "종류#idx" (트랙/체인 식별, 무시설이면 "")
   isBuilding: boolean; // build_structure (슬롯 미대상, 마커에 시작)
 }
 
 const PRODUCED_KINDS = new Set(["train_unit", "train_worker", "build_structure"]);
+
+interface Machine {
+  id: string;
+  type: string;
+  freeTime: number; // 다음 생산 가능 시각(온라인 시각으로 초기화)
+}
 
 function findWorker(patch: PatchData, race: Race): UnitDef | undefined {
   return Object.values(patch.units).find((u) => u.isWorker && u.race === race);
@@ -34,6 +43,13 @@ function producedDef(e: BuildEvent, patch: PatchData, race: Race): UnitDef | und
   return undefined;
 }
 
+/** 어떤 유닛이라도 producedFrom 으로 참조하는 건물 종류 집합(=생산 시설). */
+function facilityTypesOf(patch: PatchData): Set<string> {
+  const set = new Set<string>();
+  for (const u of Object.values(patch.units)) for (const f of u.producedFrom ?? []) set.add(f);
+  return set;
+}
+
 /**
  * 생산 이벤트들의 실제 시작/완료 시각을 계산.
  * @returns 원본 이벤트 순서(eventIndex 오름차순)로 정렬된 스케줄 결과
@@ -43,28 +59,36 @@ export function scheduleProduction(
   patch: PatchData,
   race: Race = "terran",
 ): ScheduledProd[] {
-  // 1) 건물 인스턴스가 온라인되는 시각(= 생산 가능 시작 가능 시각) 수집
-  const machines = new Map<string, number[]>(); // 종류 → 각 인스턴스의 현재 free 시각
-  const addMachine = (type: string, freeAt: number) => {
-    const arr = machines.get(type);
-    if (arr) arr.push(freeAt);
-    else machines.set(type, [freeAt]);
+  const facilityTypes = facilityTypesOf(patch);
+
+  const machinesByType = new Map<string, Machine[]>();
+  const nextIdx = new Map<string, number>();
+  const createMachine = (type: string, online: number): Machine => {
+    const idx = nextIdx.get(type) ?? 0;
+    nextIdx.set(type, idx + 1);
+    const m: Machine = { id: `${type}#${idx}`, type, freeTime: online };
+    const arr = machinesByType.get(type);
+    if (arr) arr.push(m);
+    else machinesByType.set(type, [m]);
+    return m;
   };
-  // 시작 보유 건물(본진 등)
+
+  // 시작 보유 생산시설(본진 등) → t=0 온라인
   for (const u of Object.values(patch.units)) {
-    for (let k = 0; k < (u.startCount ?? 0); k++) addMachine(u.id, 0);
+    if (!facilityTypes.has(u.id)) continue;
+    for (let k = 0; k < (u.startCount ?? 0); k++) createMachine(u.id, 0);
   }
-  // 건설되는 건물 (변태 제외 — 새 슬롯 아님)
-  events.forEach((e) => {
+  // 건설되는 생산시설(변태 제외) → 건설 완료 시각에 온라인. 건설바에 machineId 연결
+  const buildMachineId = new Map<number, string>();
+  events.forEach((e, i) => {
     if (e.kind !== "build_structure") return;
     const def = patch.units[e.unitId];
-    if (!def || def.morphedFrom) return;
-    addMachine(e.unitId, e.time + def.buildTime);
+    if (!def || def.morphedFrom || !facilityTypes.has(e.unitId)) return;
+    const m = createMachine(e.unitId, e.time + def.buildTime);
+    buildMachineId.set(i, m.id);
   });
-  // 인스턴스별 free 시각 오름차순 (안정적 배정)
-  for (const arr of machines.values()) arr.sort((a, b) => a - b);
 
-  // 2) 생산 이벤트를 큐 순서(주문 시각, 동시간은 원본 순서)로 배정
+  // 생산 이벤트를 큐 순서(주문 시각, 동시간은 원본 순서)로 배정
   const prod = events
     .map((e, i) => ({ e, i }))
     .filter((x) => PRODUCED_KINDS.has(x.e.kind))
@@ -76,32 +100,31 @@ export function scheduleProduction(
     if (!def) continue;
 
     if (e.kind === "build_structure") {
+      const machineId = buildMachineId.get(i) ?? "";
       out.push({
         eventIndex: i,
         unitId: def.id,
         orderTime: e.time,
         start: e.time,
         end: e.time + def.buildTime,
-        facility: "",
-        machineId: "",
+        facility: machineId ? def.id : "",
+        machineId,
         isBuilding: true,
       });
       continue;
     }
 
-    // 유닛/일꾼: producedFrom 건물 인스턴스 중 가장 빨리 시작 가능한 곳
-    let best: { type: string; idx: number; start: number } | null = null;
+    // 유닛/일꾼: producedFrom 인스턴스 중 가장 빨리 시작 가능한 곳 (생성 순서로 타이브레이크)
+    let best: { machine: Machine; start: number } | null = null;
     for (const type of def.producedFrom ?? []) {
-      const arr = machines.get(type);
-      if (!arr) continue;
-      for (let mi = 0; mi < arr.length; mi++) {
-        const start = Math.max(e.time, arr[mi]);
-        if (!best || start < best.start) best = { type, idx: mi, start };
+      for (const m of machinesByType.get(type) ?? []) {
+        const start = Math.max(e.time, m.freeTime);
+        if (!best || start < best.start) best = { machine: m, start };
       }
     }
 
     if (!best) {
-      // 생산 건물이 없음 → 마커 시각에 시작(테크 경고가 별도로 표시)
+      // 생산 시설 없음 → 마커 시각에 시작(테크 경고가 별도 표시)
       out.push({
         eventIndex: i,
         unitId: def.id,
@@ -117,15 +140,15 @@ export function scheduleProduction(
 
     const start = best.start;
     const end = start + def.buildTime;
-    machines.get(best.type)![best.idx] = end;
+    best.machine.freeTime = end;
     out.push({
       eventIndex: i,
       unitId: def.id,
       orderTime: e.time,
       start,
       end,
-      facility: best.type,
-      machineId: `${best.type}#${best.idx}`,
+      facility: best.machine.type,
+      machineId: best.machine.id,
       isBuilding: false,
     });
   }

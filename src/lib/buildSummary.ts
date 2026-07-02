@@ -64,8 +64,8 @@ export interface TimelineBar {
   workers?: number;
 }
 
-/** 시간 구간이 겹치는 막대를 서로 다른 레인에 배치(그리디 구간 분할). */
-function packLanes<T extends { start: number; end: number; lane: number }>(items: T[]): T[] {
+/** 시간 구간이 겹치는 막대를 서로 다른 레인에 배치(그리디). base부터 레인 인덱스 부여. */
+function packLanes<T extends { start: number; end: number; lane: number }>(items: T[], base = 0): T[] {
   const sorted = items.sort((a, b) => a.start - b.start || a.end - b.end);
   const laneEnds: number[] = [];
   for (const it of sorted) {
@@ -76,16 +76,35 @@ function packLanes<T extends { start: number; end: number; lane: number }>(items
     } else {
       laneEnds[lane] = it.end;
     }
-    it.lane = lane;
+    it.lane = base + lane;
   }
   return sorted;
 }
 
-/** 생산(스케줄된 시작~완료) + 채취정지 막대를 한 레인 체계로 배치. */
+/**
+ * 생산(스케줄) + 채취정지 막대를 트랙 모델로 배치.
+ * - 각 생산 건물 인스턴스(machineId)에 고정 열 1개. 그 건물의 건설바 + 거기서 나온 유닛이 같은 열.
+ * - 무시설(폴백)·비생산 건물·정지는 건물 열 뒤쪽 레인에 겹침 회피 packing.
+ */
 export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race = "terran"): TimelineBar[] {
-  const bars: TimelineBar[] = [];
-  for (const s of scheduleProduction(events, patch, race)) {
-    bars.push({
+  const sched = scheduleProduction(events, patch, race);
+
+  // 건물 인스턴스별 고정 트랙: 첫 등장 시각 순으로 열 인덱스 부여
+  const firstStart = new Map<string, number>();
+  for (const s of sched) {
+    if (!s.machineId) continue;
+    firstStart.set(s.machineId, Math.min(firstStart.get(s.machineId) ?? Infinity, s.start));
+  }
+  const facilityIds = [...firstStart.keys()].sort(
+    (a, b) => firstStart.get(a)! - firstStart.get(b)! || a.localeCompare(b),
+  );
+  const trackIndex = new Map<string, number>();
+  facilityIds.forEach((id, i) => trackIndex.set(id, i));
+
+  const facilityBars: TimelineBar[] = [];
+  const miscBars: TimelineBar[] = [];
+  for (const s of sched) {
+    const bar: TimelineBar = {
       kind: "prod",
       start: s.start,
       end: s.end,
@@ -96,11 +115,17 @@ export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race 
       unitId: s.unitId,
       machineId: s.machineId,
       isBuilding: s.isBuilding,
-    });
+    };
+    if (s.machineId && trackIndex.has(s.machineId)) {
+      bar.lane = trackIndex.get(s.machineId)!; // 고정 트랙(같은 건물 열에 순차 배치 → 겹침 없음)
+      facilityBars.push(bar);
+    } else {
+      miscBars.push(bar);
+    }
   }
   events.forEach((e, i) => {
     if (e.kind === "worker_transfer") {
-      bars.push({
+      miscBars.push({
         kind: "pause",
         start: e.time,
         end: e.time + e.duration,
@@ -111,7 +136,9 @@ export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race 
       });
     }
   });
-  return packLanes(bars);
+
+  packLanes(miscBars, facilityIds.length); // 건물 열 뒤쪽부터
+  return [...facilityBars, ...miscBars];
 }
 
 export function summarizeBuild(events: BuildEvent[], patch: PatchData): BuildChipGroup[] {
