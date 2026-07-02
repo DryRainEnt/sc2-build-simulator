@@ -36,7 +36,7 @@
         : unitsFor($patch, faction.race, "building");
 
   const actions = [
-    { id: "gas3", label: "가스 배치 3" },
+    { id: "gas1", label: "가스 일꾼 +1" },
     { id: "pause", label: "채취정지 10s" },
     { id: "death", label: "일꾼 사망" },
   ];
@@ -81,8 +81,8 @@
   function clickAction(id: string) {
     if (cur == null) return;
     switch (id) {
-      case "gas3":
-        queueAssign(side, cur, 3, "gas");
+      case "gas1":
+        queueAssign(side, cur, 1, "gas");
         break;
       case "pause":
         queueTransfer(side, cur, 3, 10);

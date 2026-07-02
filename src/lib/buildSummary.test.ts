@@ -36,7 +36,7 @@ describe("summarizeBuild — 빌드 칩 요약", () => {
     ];
     const g = summarizeBuild(events, LOTV_PATCH);
     const labels = g[0].items.map((i) => i.label);
-    expect(labels).toContain("가스 배치 3");
+    expect(labels).toContain("가스 일꾼 3");
     expect(labels).toContain("채취정지 2기/10s");
   });
 });

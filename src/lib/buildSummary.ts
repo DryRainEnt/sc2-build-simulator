@@ -27,7 +27,10 @@ function describe(e: BuildEvent, patch: PatchData): { key: string; label: string
     case "assign_worker":
       return {
         key: `assign:${e.to}:${e.workers}`,
-        label: `${e.to === "gas" ? "가스" : "미네랄"} 배치 ${e.workers}`,
+        label:
+          e.workers === 1
+            ? `${e.to === "gas" ? "가스" : "미네랄"} 일꾼`
+            : `${e.to === "gas" ? "가스" : "미네랄"} 일꾼 ${e.workers}`,
       };
     case "worker_transfer":
       return {
