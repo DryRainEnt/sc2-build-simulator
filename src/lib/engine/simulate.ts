@@ -152,7 +152,11 @@ export function simulate(
   let spentMin = 0;
   let spentGas = 0;
   let supplyUsed = patch.start.workers;
-  let supplyCap = patch.start.supplyCap;
+  // 시작 보급 상한 = 종족 시작 보유 유닛/건물(본진, 저그는 대군주)의 공급 합
+  let supplyCap = 0;
+  for (const u of Object.values(patch.units)) {
+    if (u.race === race && u.startCount && u.supplyProvided) supplyCap += u.startCount * u.supplyProvided;
+  }
   let mineralWorkers = patch.start.workers;
   let gasWorkers = 0;
   let pausedMineral = 0;

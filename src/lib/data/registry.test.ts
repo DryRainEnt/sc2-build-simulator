@@ -16,7 +16,7 @@ const BASE: PatchFile = {
     maxWorkersPerMineralPatch: 3,
     maxWorkersPerGeyser: 3,
   },
-  start: { minerals: 50, gas: 0, workers: 12, supplyCap: 15 },
+  start: { minerals: 50, gas: 0, workers: 12 },
   base: { mineralPatches: 8, geysers: 2 },
   units: {
     scv: { name: "SCV", race: "terran", category: "worker", minerals: 50, gas: 0, supply: 1, buildTime: 12 },
@@ -47,7 +47,7 @@ describe("패치 레지스트리 — 상속 오버라이드", () => {
 
   it("체인 상속(2단계)과 harvest 부분 오버라이드", () => {
     const v2: PatchFile = { version: "1.0.1", extends: "1.0.0", harvest: { gasPerWorker: 0.7 } };
-    const v3: PatchFile = { version: "1.0.2", extends: "1.0.1", start: { supplyCap: 14 } };
+    const v3: PatchFile = { version: "1.0.2", extends: "1.0.1", start: { minerals: 999 } };
     const map = new Map<string, PatchFile>([
       ["1.0.0", BASE],
       ["1.0.1", v2],
@@ -56,7 +56,7 @@ describe("패치 레지스트리 — 상속 오버라이드", () => {
     const r = resolvePatch("1.0.2", map);
     expect(r.harvest.gasPerWorker).toBe(0.7); // v2에서
     expect(r.harvest.mineralPerWorker).toBeCloseTo(0.6667, 6); // 베이스 유지
-    expect(r.start.supplyCap).toBe(14); // v3에서
+    expect(r.start.minerals).toBe(999); // v3에서
     expect(r.start.workers).toBe(12); // 베이스 유지
   });
 
@@ -108,7 +108,11 @@ describe("패치 레지스트리 — 실데이터 로드", () => {
     // 시작 일꾼 12→8, 나머지 시작조건은 5.0.14 상속
     expect(DEFAULT_PATCH.start.workers).toBe(8);
     expect(DEFAULT_PATCH.start.minerals).toBe(50);
-    expect(DEFAULT_PATCH.start.supplyCap).toBe(15);
+    // 5.0.16: 본진 인구 13, 부화장 300/4
+    expect(DEFAULT_PATCH.units.command_center.supplyProvided).toBe(13);
+    expect(DEFAULT_PATCH.units.hatchery.supplyProvided).toBe(4);
+    expect(DEFAULT_PATCH.units.hatchery.minerals).toBe(300);
+    expect(getPatchById("5.0.14").units.hatchery.minerals).toBe(275); // 5.0.14는 275
     // 핫픽스 생산시간 오버라이드
     expect(DEFAULT_PATCH.units.reaper.buildTime).toBe(34);
     expect(DEFAULT_PATCH.units.adept.buildTime).toBe(33);
@@ -152,7 +156,7 @@ describe("패치 레지스트리 — 실데이터 로드", () => {
     // 프로토스 스팟 (Liquipedia LotV)
     expect(m.carrier).toMatchObject({ minerals: 350, gas: 250, supply: 6, buildTime: 64 });
     expect(m.stalker.requires).toEqual(["cybernetics_core"]);
-    expect(m.nexus.supplyProvided).toBe(15);
+    expect(m.nexus.supplyProvided).toBe(13); // 5.0.16
     // 저그 스팟 + 변태 관계
     expect(m.ultralisk).toMatchObject({ minerals: 275, gas: 200, supply: 6 });
     expect(m.baneling.morphedFrom).toBe("zergling");

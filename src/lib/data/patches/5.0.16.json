@@ -2,14 +2,25 @@
   "version": "5.0.16",
   "extends": "5.0.14",
   "name": "5.0.16 (+hotfix)",
-  "source": "https://news.blizzard.com/en-us/article/24259080/starcraft-ii-5-0-16-patch-notes · https://news.blizzard.com/en-us/article/24289266/starcraft-ii-5-0-16-hotfix-patch-notes",
-  "notes": "11년 만의 경제 재조정. 시작 일꾼 12→8. 핫픽스 생산시간: 사신32→34, 점멸광신자30→33, 고위/암흑기사43→40. 시뮬 미반영(값만 참고): 미네랄 대형1800→1600·소형900→1100, 간헐천 2250→2500→(핫픽스)2000, 리치가스 8→6, 애벌레율 9.5→9.9초, 과부하지뢰/모선 전투스탯.",
+  "source": "https://news.blizzard.com/en-us/article/24259080/starcraft-ii-5-0-16-patch-notes · https://news.blizzard.com/en-us/article/24289266/starcraft-ii-5-0-16-hotfix-patch-notes · https://liquipedia.net/starcraft2/Patch_5.0.16",
+  "notes": "11년 만의 경제 재조정. 시작 일꾼 12→8. 본진 인구: 사령부/넥서스 15→13, 부화장/둥지/군락 6→4(궤도·행성요새도 +2 제거로 13). 부화장 275→300. 유령 보급 2→3. 지상보호구 비용 인하. 핫픽스 생산시간(사신34/점멸광신자33/고위·암흑기사40)·애벌레 9.9초. 시뮬 미반영: 미네랄/간헐천 잔량, 리치가스6, 워프변환 25/25 비용, 관문별 워프쿨다운.",
   "start": { "workers": 8 },
   "larva": { "spawnSeconds": 9.9 },
   "units": {
     "reaper": { "buildTime": 34 },
     "adept": { "buildTime": 33 },
     "high_templar": { "buildTime": 40 },
-    "dark_templar": { "buildTime": 40 }
+    "dark_templar": { "buildTime": 40 },
+    "command_center": { "supplyProvided": 13 },
+    "orbital_command": { "supplyProvided": 13 },
+    "planetary_fortress": { "supplyProvided": 13 },
+    "nexus": { "supplyProvided": 13 },
+    "hatchery": { "minerals": 300, "supplyProvided": 4 },
+    "lair": { "supplyProvided": 4 },
+    "hive": { "supplyProvided": 4 },
+    "ghost": { "supply": 3 },
+    "ground_carapace_1": { "minerals": 100, "gas": 100 },
+    "ground_carapace_2": { "minerals": 150, "gas": 150 },
+    "ground_carapace_3": { "minerals": 200, "gas": 200 }
   }
 }

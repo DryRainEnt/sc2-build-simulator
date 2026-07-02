@@ -28,7 +28,6 @@ export const zStart = z
     minerals: z.number().nonnegative(),
     gas: z.number().nonnegative(),
     workers: z.number().int().nonnegative(),
-    supplyCap: z.number().nonnegative(),
   })
   .strict();
 

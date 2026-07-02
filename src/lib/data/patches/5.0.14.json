@@ -13,7 +13,7 @@
     "maxWorkersPerMineralPatch": 3,
     "maxWorkersPerGeyser": 3
   },
-  "start": { "minerals": 50, "gas": 0, "workers": 12, "supplyCap": 15 },
+  "start": { "minerals": 50, "gas": 0, "workers": 12 },
   "base": { "mineralPatches": 8, "geysers": 2 },
   "larva": { "spawnSeconds": 11, "perBase": 3 },
   "units": {
@@ -176,7 +176,7 @@
     "interceptor": { "name": "Interceptor", "race": "protoss", "category": "unit", "minerals": 15, "gas": 0, "supply": 0, "buildTime": 9, "producedFrom": ["carrier"], "requires": ["carrier"], "hidden": true, "note": "캐리어 자동 생산" },
     "mothership": { "name": "Mothership", "race": "protoss", "category": "unit", "minerals": 400, "gas": 400, "supply": 8, "buildTime": 89, "producedFrom": ["nexus"], "requires": ["fleet_beacon"] },
 
-    "hatchery": { "name": "Hatchery", "race": "zerg", "category": "building", "minerals": 300, "gas": 0, "supply": 0, "supplyProvided": 6, "buildTime": 71, "producedFrom": ["drone"], "startCount": 1 },
+    "hatchery": { "name": "Hatchery", "race": "zerg", "category": "building", "minerals": 275, "gas": 0, "supply": 0, "supplyProvided": 6, "buildTime": 71, "producedFrom": ["drone"], "startCount": 1 },
     "lair": { "name": "Lair", "race": "zerg", "category": "building", "minerals": 150, "gas": 100, "supply": 0, "supplyProvided": 6, "buildTime": 57, "producedFrom": ["hatchery"], "requires": ["spawning_pool"], "morphedFrom": "hatchery" },
     "hive": { "name": "Hive", "race": "zerg", "category": "building", "minerals": 200, "gas": 150, "supply": 0, "supplyProvided": 6, "buildTime": 71, "producedFrom": ["lair"], "requires": ["infestation_pit"], "morphedFrom": "lair" },
     "extractor": { "name": "Extractor", "race": "zerg", "category": "building", "minerals": 25, "gas": 0, "supply": 0, "buildTime": 21, "producedFrom": ["drone"] },
@@ -194,7 +194,7 @@
     "nydus_network": { "name": "Nydus Network", "race": "zerg", "category": "building", "minerals": 150, "gas": 150, "supply": 0, "buildTime": 36, "producedFrom": ["drone"], "requires": ["lair"] },
     "ultralisk_cavern": { "name": "Ultralisk Cavern", "race": "zerg", "category": "building", "minerals": 150, "gas": 200, "supply": 0, "buildTime": 46, "producedFrom": ["drone"], "requires": ["hive"] },
     "drone": { "name": "Drone", "race": "zerg", "category": "worker", "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12, "producedFrom": ["larva"], "morphedFrom": "larva" },
-    "overlord": { "name": "Overlord", "race": "zerg", "category": "unit", "minerals": 100, "gas": 0, "supply": 0, "supplyProvided": 8, "buildTime": 18, "producedFrom": ["larva"], "morphedFrom": "larva" },
+    "overlord": { "name": "Overlord", "race": "zerg", "category": "unit", "minerals": 100, "gas": 0, "supply": 0, "supplyProvided": 8, "buildTime": 18, "producedFrom": ["larva"], "morphedFrom": "larva", "startCount": 1, "note": "저그 시작 시 1기 보유(시작 보급 상한 계산)" },
     "overseer": { "name": "Overseer", "race": "zerg", "category": "unit", "minerals": 50, "gas": 50, "supply": 0, "buildTime": 12, "producedFrom": ["overlord"], "requires": ["lair"], "morphedFrom": "overlord" },
     "queen": { "name": "Queen", "race": "zerg", "category": "unit", "minerals": 175, "gas": 0, "supply": 2, "buildTime": 36, "producedFrom": ["hatchery"], "requires": ["spawning_pool"] },
     "zergling": { "name": "Zergling", "race": "zerg", "category": "unit", "minerals": 50, "gas": 0, "supply": 1, "buildTime": 17, "producedFrom": ["larva"], "requires": ["spawning_pool"], "morphedFrom": "larva", "larvaCost": 1, "note": "1클릭=쌍(2마리): 50미네랄/1보급/애벌레1" },

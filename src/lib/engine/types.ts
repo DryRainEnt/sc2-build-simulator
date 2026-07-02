@@ -82,7 +82,7 @@ export interface PatchData {
     minerals: number;
     gas: number;
     workers: number;
-    supplyCap: number;
+    /** 시작 보급 상한은 종족 본진(startCount·supplyProvided)에서 엔진이 유도한다. */
   };
   base: BaseSetup;
   /** 저그 애벌레 설정 (없으면 엔진 기본값). */

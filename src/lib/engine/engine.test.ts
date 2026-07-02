@@ -227,6 +227,12 @@ describe("시뮬레이션 — 테크 선행조건 게이팅", () => {
 });
 
 describe("시뮬레이션 — 보급 공급", () => {
+  it("시작 보급 상한은 종족 본진에서 유도 (저그=부화장+대군주)", () => {
+    // 5.0.14: 사령부 15, 부화장 6, 대군주 8
+    expect(simulate([], LOTV_PATCH, { duration: 10, race: "terran" }).stateAt(0).supplyCap).toBe(15);
+    expect(simulate([], LOTV_PATCH, { duration: 10, race: "zerg" }).stateAt(0).supplyCap).toBe(14);
+  });
+
   it("보급(인구)은 생산 시작 시점에 소모된다 (완성 대기 아님)", () => {
     const r = simulate([{ time: 0, kind: "train_unit", unitId: "scv" }], LOTV_PATCH, {
       duration: 30,
