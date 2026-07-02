@@ -41,6 +41,59 @@ function describe(e: BuildEvent, patch: PatchData): { key: string; label: string
   }
 }
 
+// ── 생산 기간 막대 (시작→완료 범위 표시) ────────────────────────────────
+export interface ProdBar {
+  time: number; // 시작(주문) 시각
+  end: number; // 완료 시각 = 시작 + buildTime
+  label: string;
+  unitId: string;
+  count: number; // 같은 시각·같은 유닛 중첩 수
+  lane: number; // 겹침 회피용 가로 레인 인덱스(0=중앙축에 가장 가까움)
+}
+
+const PROD_KINDS = new Set(["train_unit", "build_structure"]);
+
+/**
+ * 생산/건설 이벤트를 시작→완료 기간 막대로 배치.
+ * 같은 (시각, 유닛)은 하나로 묶어 개수를 센다.
+ * 시간 구간이 겹치는 막대는 서로 다른 레인에 배치(그리디 구간 분할).
+ */
+export function productionLayout(events: BuildEvent[], patch: PatchData): ProdBar[] {
+  const groups = new Map<string, ProdBar>();
+  for (const e of events) {
+    if (!PROD_KINDS.has(e.kind)) continue;
+    const unitId = (e as { unitId: string }).unitId;
+    const def = patch.units[unitId];
+    if (!def) continue;
+    const key = `${e.time}|${unitId}`;
+    const g = groups.get(key);
+    if (g) g.count += 1;
+    else
+      groups.set(key, {
+        time: e.time,
+        end: e.time + def.buildTime,
+        label: def.name,
+        unitId,
+        count: 1,
+        lane: 0,
+      });
+  }
+
+  const bars = [...groups.values()].sort((a, b) => a.time - b.time || a.end - b.end);
+  const laneEnds: number[] = []; // 각 레인의 현재 점유 종료 시각
+  for (const bar of bars) {
+    let lane = laneEnds.findIndex((end) => end <= bar.time);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(bar.end);
+    } else {
+      laneEnds[lane] = bar.end;
+    }
+    bar.lane = lane;
+  }
+  return bars;
+}
+
 export function summarizeBuild(events: BuildEvent[], patch: PatchData): BuildChipGroup[] {
   const byTime = new Map<number, Map<string, BuildChipItem>>();
   for (const e of events) {

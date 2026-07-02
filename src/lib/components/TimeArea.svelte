@@ -13,8 +13,8 @@
     removeMarker,
     removeOneEvent,
   } from "../stores/sim";
-  import type { ResourceState } from "../engine/types";
-  import { summarizeBuild } from "../buildSummary";
+  import type { BuildEvent, ResourceState } from "../engine/types";
+  import { summarizeBuild, productionLayout } from "../buildSummary";
   import { unitIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
   import ResourceReadout from "./ResourceReadout.svelte";
@@ -22,8 +22,23 @@
   const nameOf = (id: string) => $patch.units[id]?.name ?? id;
   const missingLabel = (missing: string[]) => missing.map(nameOf).join(", ");
 
-  $: leftBuild = summarizeBuild($factions.left.events, $patch);
-  $: rightBuild = summarizeBuild($factions.right.events, $patch);
+  const isAction = (e: BuildEvent) =>
+    e.kind === "assign_worker" || e.kind === "worker_transfer" || e.kind === "unit_death";
+
+  // 생산 막대 제거 시 매칭할 이벤트 종류 (건물=build_structure, 그 외=train_unit)
+  const prodKind = (unitId: string): BuildEvent["kind"] =>
+    $patch.units[unitId]?.category === "building" ? "build_structure" : "train_unit";
+
+  // 생산/건설 = 기간 막대, 행동 = 순간 칩
+  $: leftProd = productionLayout($factions.left.events, $patch);
+  $: rightProd = productionLayout($factions.right.events, $patch);
+  $: leftActions = summarizeBuild($factions.left.events.filter(isAction), $patch);
+  $: rightActions = summarizeBuild($factions.right.events.filter(isAction), $patch);
+
+  // 레인 → 중앙축에서의 픽셀 오프셋
+  const LANE_BASE = 42;
+  const LANE_W = 32;
+  const laneOffset = (lane: number) => LANE_BASE + lane * LANE_W;
 
   let el: HTMLDivElement;
 
@@ -102,29 +117,51 @@
     <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px"><ResourceReadout s={rs} /></div>
   {/each}
 
-  <!-- 배치된 빌드 칩 (진영별) -->
-  {#each leftBuild as g}
+  <!-- 생산/건설 기간 막대: 아이콘(시작) → 세로선 → 원(완료) -->
+  {#each leftProd as bar}
+    <div class="prod left" style="top: {timeToPx(bar.time)}px; height: {timeToPx(bar.end - bar.time)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
+      <div class="prod-stem"></div>
+      <div class="prod-dot" title="완료 {bar.end}s"></div>
+      <button
+        class="prod-icon"
+        title="{bar.label} · {bar.time}s → {bar.end}s{bar.count > 1 ? ` ×${bar.count}` : ''} · 클릭: 1개 제거"
+        on:click|stopPropagation={() => removeOneEvent("left", bar.time, prodKind(bar.unitId), bar.unitId)}
+      >
+        <Icon src={unitIconUrl(bar.unitId)} label={bar.label} size={24} />
+        {#if bar.count > 1}<span class="cnt">{bar.count}</span>{/if}
+      </button>
+    </div>
+  {/each}
+  {#each rightProd as bar}
+    <div class="prod right" style="top: {timeToPx(bar.time)}px; height: {timeToPx(bar.end - bar.time)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
+      <div class="prod-stem"></div>
+      <div class="prod-dot" title="완료 {bar.end}s"></div>
+      <button
+        class="prod-icon"
+        title="{bar.label} · {bar.time}s → {bar.end}s{bar.count > 1 ? ` ×${bar.count}` : ''} · 클릭: 1개 제거"
+        on:click|stopPropagation={() => removeOneEvent("right", bar.time, prodKind(bar.unitId), bar.unitId)}
+      >
+        <Icon src={unitIconUrl(bar.unitId)} label={bar.label} size={24} />
+        {#if bar.count > 1}<span class="cnt">{bar.count}</span>{/if}
+      </button>
+    </div>
+  {/each}
+
+  <!-- 행동(일꾼이동/정지/사망) 칩 -->
+  {#each leftActions as g}
     <div class="build left" style="top: {timeToPx(g.time)}px">
       {#each g.items as it}
-        <button
-          class="chip"
-          title="{it.label} @ {g.time}s · 클릭: 1개 제거"
-          on:click|stopPropagation={() => removeOneEvent("left", g.time, it.kind, it.unitId)}
-        >
-          {#if it.unitId}<Icon src={unitIconUrl(it.unitId)} label={it.label} size={13} />{/if}{it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
+        <button class="chip" title="{it.label} @ {g.time}s · 클릭: 1개 제거" on:click|stopPropagation={() => removeOneEvent("left", g.time, it.kind, it.unitId)}>
+          {it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
         </button>
       {/each}
     </div>
   {/each}
-  {#each rightBuild as g}
+  {#each rightActions as g}
     <div class="build right" style="top: {timeToPx(g.time)}px">
       {#each g.items as it}
-        <button
-          class="chip"
-          title="{it.label} @ {g.time}s · 클릭: 1개 제거"
-          on:click|stopPropagation={() => removeOneEvent("right", g.time, it.kind, it.unitId)}
-        >
-          {#if it.unitId}<Icon src={unitIconUrl(it.unitId)} label={it.label} size={13} />{/if}{it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
+        <button class="chip" title="{it.label} @ {g.time}s · 클릭: 1개 제거" on:click|stopPropagation={() => removeOneEvent("right", g.time, it.kind, it.unitId)}>
+          {it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
         </button>
       {/each}
     </div>
@@ -287,6 +324,66 @@
   }
   .techmark.right {
     left: calc(50% + 20px);
+  }
+  /* 생산 기간 막대 */
+  .prod {
+    position: absolute;
+    width: 26px;
+    z-index: 3;
+  }
+  .prod-stem {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: #94a3b8;
+  }
+  .prod-dot {
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    border: 2px solid #94a3b8;
+    background: #fff;
+  }
+  .prod-icon {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1px;
+    border: 1px solid #0004;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 2px #0003;
+  }
+  .prod-icon:hover {
+    border-color: #ef4444;
+    background: #fee2e2;
+  }
+  .prod-icon .cnt {
+    position: absolute;
+    right: -5px;
+    top: -5px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    border-radius: 7px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 14px;
+    text-align: center;
   }
   .build {
     position: absolute;
