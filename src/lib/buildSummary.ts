@@ -44,6 +44,8 @@ function describe(e: BuildEvent, patch: PatchData): { key: string; label: string
     }
     case "inject":
       return { key: "inject", label: "인젝트" };
+    case "addon":
+      return { key: `addon:${e.machineId}`, label: "반응로" };
   }
 }
 
@@ -83,27 +85,32 @@ function packLanes<T extends { start: number; end: number; lane: number }>(items
   return sorted;
 }
 
+/** 건물 트랙(열) 메타데이터 — 헤더/애드온 UI용. */
+export interface FacilityTrack {
+  machineId: string;
+  type: string;
+  lane: number; // 기준(가장 안쪽) 레인
+  laneCount: number; // 열 폭(1, 반응로는 2)
+  onlineTime: number; // 건설 완료(또는 0=시작보유)
+  hasReactor: boolean;
+}
+
+export interface TimelineLayout {
+  bars: TimelineBar[];
+  tracks: FacilityTrack[];
+}
+
 /**
- * 생산(스케줄) + 채취정지 막대를 트랙 모델로 배치.
- * - 각 생산 건물 인스턴스(machineId)에 고정 열 1개. 그 건물의 건설바 + 거기서 나온 유닛이 같은 열.
+ * 생산(스케줄) + 채취정지를 트랙 모델로 배치.
+ * - 각 생산 건물 인스턴스(machineId)에 고정 열. 반응로가 붙어 동시 2기면 열이 2줄로 벌어짐.
  * - 무시설(폴백)·비생산 건물·정지는 건물 열 뒤쪽 레인에 겹침 회피 packing.
  */
-export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race = "terran"): TimelineBar[] {
+export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Race = "terran"): TimelineLayout {
   const sched = scheduleProduction(events, patch, race);
+  const reactored = new Set<string>();
+  for (const e of events) if (e.kind === "addon" && e.addon === "reactor") reactored.add(e.machineId);
 
-  // 건물 인스턴스별 고정 트랙: 첫 등장 시각 순으로 열 인덱스 부여
-  const firstStart = new Map<string, number>();
-  for (const s of sched) {
-    if (!s.machineId) continue;
-    firstStart.set(s.machineId, Math.min(firstStart.get(s.machineId) ?? Infinity, s.start));
-  }
-  const facilityIds = [...firstStart.keys()].sort(
-    (a, b) => firstStart.get(a)! - firstStart.get(b)! || a.localeCompare(b),
-  );
-  const trackIndex = new Map<string, number>();
-  facilityIds.forEach((id, i) => trackIndex.set(id, i));
-
-  const facilityBars: TimelineBar[] = [];
+  const facMap = new Map<string, TimelineBar[]>();
   const miscBars: TimelineBar[] = [];
   for (const s of sched) {
     const bar: TimelineBar = {
@@ -118,13 +125,42 @@ export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race 
       machineId: s.machineId,
       isBuilding: s.isBuilding,
     };
-    if (s.machineId && trackIndex.has(s.machineId)) {
-      bar.lane = trackIndex.get(s.machineId)!; // 고정 트랙(같은 건물 열에 순차 배치 → 겹침 없음)
-      facilityBars.push(bar);
-    } else {
-      miscBars.push(bar);
-    }
+    if (s.machineId) {
+      const arr = facMap.get(s.machineId);
+      if (arr) arr.push(bar);
+      else facMap.set(s.machineId, [bar]);
+    } else miscBars.push(bar);
   }
+
+  // 건물별 첫 등장 시각 순으로 열 할당 (반응로면 2줄 예약)
+  const firstStart = (mid: string) => Math.min(...facMap.get(mid)!.map((b) => b.start));
+  const machineIds = [...facMap.keys()].sort((a, b) => firstStart(a) - firstStart(b) || a.localeCompare(b));
+
+  const facilityBars: TimelineBar[] = [];
+  const tracks: FacilityTrack[] = [];
+  let cursor = 0;
+  for (const mid of machineIds) {
+    const mbars = facMap.get(mid)!;
+    packLanes(mbars, 0); // 건물 내부 서브레인(순차면 1, 동시2기면 2)
+    const subLanes = mbars.reduce((m, b) => Math.max(m, b.lane), 0) + 1;
+    const hasReactor = reactored.has(mid);
+    const laneCount = Math.max(subLanes, hasReactor ? 2 : 1);
+    for (const b of mbars) {
+      b.lane += cursor;
+      facilityBars.push(b);
+    }
+    const construction = mbars.find((b) => b.isBuilding);
+    tracks.push({
+      machineId: mid,
+      type: mid.split("#")[0],
+      lane: cursor,
+      laneCount,
+      onlineTime: construction ? construction.end : 0,
+      hasReactor,
+    });
+    cursor += laneCount;
+  }
+
   events.forEach((e, i) => {
     if (e.kind === "worker_transfer") {
       miscBars.push({
@@ -138,9 +174,17 @@ export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race 
       });
     }
   });
+  packLanes(miscBars, cursor); // 건물 열 뒤쪽부터
 
-  packLanes(miscBars, facilityIds.length); // 건물 열 뒤쪽부터
-  return [...facilityBars, ...miscBars];
+  return { bars: [...facilityBars, ...miscBars], tracks };
+}
+
+export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race = "terran"): TimelineBar[] {
+  return layoutTimeline(events, patch, race).bars;
+}
+
+export function facilityTracks(events: BuildEvent[], patch: PatchData, race: Race = "terran"): FacilityTrack[] {
+  return layoutTimeline(events, patch, race).tracks;
 }
 
 export interface IdleBand {

@@ -15,10 +15,14 @@
     removeEventByIndex,
     setPauseDuration,
     setEventTimes,
+    selectedTrack,
+    selectTrack,
+    queueAddon,
+    removeAddon,
   } from "../stores/sim";
   import type { BuildEvent, ResourceState } from "../engine/types";
   import type { Side } from "../stores/sim";
-  import { summarizeBuild, timelineBars, contiguousBlock, idleIntervals, type TimelineBar } from "../buildSummary";
+  import { summarizeBuild, timelineBars, facilityTracks, contiguousBlock, idleIntervals, type TimelineBar } from "../buildSummary";
   import { computeLarva } from "../engine/larva";
   import { unitIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
@@ -41,6 +45,17 @@
   // 생산 건물 유휴 구간(빌드 최적화용)
   $: leftIdle = idleIntervals(leftBars);
   $: rightIdle = idleIntervals(rightBars);
+
+  // 건물 트랙 헤더/애드온
+  $: leftTracks = facilityTracks($factions.left.events, $patch, $factions.left.race);
+  $: rightTracks = facilityTracks($factions.right.events, $patch, $factions.right.race);
+  const isSelected = (side: Side, mid: string) =>
+    $selectedTrack?.side === side && $selectedTrack?.machineId === mid;
+  function toggleReactor(side: Side, mid: string, hasReactor: boolean) {
+    if (hasReactor) removeAddon(side, mid);
+    else if ($currentMarker != null) queueAddon(side, mid, $currentMarker);
+  }
+  const iconOfType = (type: string) => unitIconUrl(type);
 
   // 저그 애벌레 (자원 표시용)
   $: leftLarva = computeLarva($factions.left.events, $patch, $factions.left.race);
@@ -195,6 +210,30 @@
     ></button>
     <div class="readout left" class:err={neg(ls)} style="top: {timeToPx(m)}px"><ResourceReadout s={ls} larva={lv("left", m)} /></div>
     <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px"><ResourceReadout s={rs} larva={lv("right", m)} /></div>
+  {/each}
+
+  <!-- 건물 트랙 헤더 (클릭 선택 → 반응로 부착) -->
+  {#each leftTracks as t}
+    <button class="track-head left" class:sel={isSelected("left", t.machineId)} style="right: calc(50% + {laneOffset(t.lane)}px)" title="{$patch.units[t.type]?.name ?? t.type} · 클릭: 선택" on:click|stopPropagation={() => selectTrack("left", t.machineId)}>
+      <Icon src={iconOfType(t.type)} label={t.type} size={18} />
+      {#if t.hasReactor}<span class="rbadge">R</span>{/if}
+    </button>
+    {#if isSelected("left", t.machineId)}
+      <button class="track-react left" style="right: calc(50% + {laneOffset(t.lane) + 30}px)" disabled={!t.hasReactor && $currentMarker == null} title="반응로 부착/해제 (현재 마커 시각)" on:click|stopPropagation={() => toggleReactor("left", t.machineId, t.hasReactor)}>
+        {t.hasReactor ? "−반응로" : "+반응로"}
+      </button>
+    {/if}
+  {/each}
+  {#each rightTracks as t}
+    <button class="track-head right" class:sel={isSelected("right", t.machineId)} style="left: calc(50% + {laneOffset(t.lane)}px)" title="{$patch.units[t.type]?.name ?? t.type} · 클릭: 선택" on:click|stopPropagation={() => selectTrack("right", t.machineId)}>
+      <Icon src={iconOfType(t.type)} label={t.type} size={18} />
+      {#if t.hasReactor}<span class="rbadge">R</span>{/if}
+    </button>
+    {#if isSelected("right", t.machineId)}
+      <button class="track-react right" style="left: calc(50% + {laneOffset(t.lane) + 30}px)" disabled={!t.hasReactor && $currentMarker == null} title="반응로 부착/해제 (현재 마커 시각)" on:click|stopPropagation={() => toggleReactor("right", t.machineId, t.hasReactor)}>
+        {t.hasReactor ? "−반응로" : "+반응로"}
+      </button>
+    {/if}
   {/each}
 
   <!-- 생산 건물 유휴 구간 (빗금) -->
@@ -475,6 +514,65 @@
   .prod-icon:hover {
     border-color: #2563eb;
     background: #dbeafe;
+  }
+  /* 건물 트랙 헤더 */
+  .track-head {
+    position: absolute;
+    top: -30px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #fff;
+    cursor: pointer;
+    z-index: 8;
+  }
+  .track-head.left {
+    transform: translateX(50%);
+  }
+  .track-head.right {
+    transform: translateX(-50%);
+  }
+  .track-head:hover {
+    border-color: #64748b;
+  }
+  .track-head.sel {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px #2563eb55;
+  }
+  .rbadge {
+    font-size: 8px;
+    font-weight: 800;
+    color: #fff;
+    background: #16a34a;
+    border-radius: 3px;
+    padding: 0 2px;
+    line-height: 12px;
+  }
+  .track-react {
+    position: absolute;
+    top: -30px;
+    font-size: 10px;
+    padding: 2px 6px;
+    border: 1px solid #16a34a;
+    border-radius: 5px;
+    background: #dcfce7;
+    color: #166534;
+    cursor: pointer;
+    white-space: nowrap;
+    z-index: 8;
+  }
+  .track-react.left {
+    transform: translateX(50%);
+  }
+  .track-react.right {
+    transform: translateX(-50%);
+  }
+  .track-react:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
   /* 생산 건물 유휴 구간 (빗금) */
   .idle {

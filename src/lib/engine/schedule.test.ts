@@ -76,19 +76,20 @@ describe("scheduleProduction — 생산 슬롯 스케줄러", () => {
     expect(warp.end).toBe(55); // 워프인 5s
   });
 
-  it("리액터: 병영 동시 2기 병렬 생산", () => {
+  it("반응로 애드온: 지정 병영에 2슬롯 → 동시 2기(같은 건물)", () => {
     const events: BuildEvent[] = [
-      { time: 0, kind: "build_structure", unitId: "barracks" }, // 온라인 46
-      { time: 0, kind: "build_structure", unitId: "reactor" }, // 완성 36 → 병영에 부착
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // barracks#0, 온라인 46
+      { time: 0, kind: "addon", machineId: "barracks#0", addon: "reactor" },
       { time: 50, kind: "train_unit", unitId: "marine" },
       { time: 50, kind: "train_unit", unitId: "marine" },
       { time: 50, kind: "train_unit", unitId: "marine" },
     ];
     const m = scheduleProduction(events, LOTV_PATCH).filter((s) => s.unitId === "marine");
     expect(m[0].start).toBe(50);
-    expect(m[1].start).toBe(50); // 리액터 2번째 슬롯 → 병렬
-    expect(m[0].machineId).not.toBe(m[1].machineId);
-    expect(m[2].start).toBe(68); // 세 번째는 슬롯 없어 대기
+    expect(m[1].start).toBe(50); // 2번째 슬롯 → 병렬
+    expect(m[0].machineId).toBe("barracks#0"); // 같은 건물(같은 열)
+    expect(m[1].machineId).toBe("barracks#0");
+    expect(m[2].start).toBe(68); // 3번째는 슬롯 없어 대기
   });
 
   it("시작 보유 사령부에서 SCV 순차 생산", () => {

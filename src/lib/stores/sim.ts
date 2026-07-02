@@ -32,6 +32,9 @@ export const factions = writable<Record<Side, FactionState>>({
   right: emptyFaction("protoss"),
 });
 
+/** 선택된 건물 트랙(애드온 부착 대상). */
+export const selectedTrack = writable<{ side: Side; machineId: string } | null>(null);
+
 /** 배치된 마커 시각들 (양 진영 공유, 오름차순). */
 export const markers = writable<number[]>([]);
 /** 현재 선택된(활성) 마커 시각 — 유닛 클릭 시 생산이 배치되는 지점. */
@@ -134,6 +137,29 @@ export function queueDeath(side: Side, marker: number, unitId: string, count: nu
 
 export function queueInject(side: Side, marker: number): void {
   addEvent(side, { time: marker, kind: "inject" });
+}
+
+/** 건물 트랙 선택 토글 (애드온 부착 대상). */
+export function selectTrack(side: Side, machineId: string): void {
+  selectedTrack.update((cur) =>
+    cur && cur.side === side && cur.machineId === machineId ? null : { side, machineId },
+  );
+}
+
+/** 지정 건물에 반응로 부착 (현재 마커 시각). */
+export function queueAddon(side: Side, machineId: string, marker: number): void {
+  addEvent(side, { time: marker, kind: "addon", machineId, addon: "reactor" });
+}
+
+/** 지정 건물의 반응로 애드온 제거. */
+export function removeAddon(side: Side, machineId: string): void {
+  factions.update((f) => ({
+    ...f,
+    [side]: {
+      ...f[side],
+      events: f[side].events.filter((e) => !(e.kind === "addon" && e.machineId === machineId)),
+    },
+  }));
 }
 
 /** 채취정지 이벤트의 지속시간 변경 (끝 노드 드래그). 최소 1초. */

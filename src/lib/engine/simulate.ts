@@ -104,6 +104,12 @@ function buildOps(
         push({ t: e.time, type: "death", isWorker, supply, count });
         break;
       }
+      case "addon": {
+        // 애드온(반응로) 비용은 주문 시점에 소모 (보급 0). 슬롯 효과는 스케줄러에서.
+        const def = patch.units[e.addon];
+        if (def) push({ t: e.time, type: "spend", minerals: def.minerals, gas: def.gas, supply: 0 });
+        break;
+      }
     }
   });
 

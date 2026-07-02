@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { summarizeBuild, timelineBars, contiguousBlock, idleIntervals } from "./buildSummary";
+import { summarizeBuild, timelineBars, facilityTracks, contiguousBlock, idleIntervals } from "./buildSummary";
 import { LOTV_PATCH } from "./data/lotv";
 import type { BuildEvent } from "./engine/types";
 
@@ -89,6 +89,25 @@ describe("timelineBars — 생산(스케줄) + 채취정지 통합 배치", () =
     const barracksLanes = new Set(barracks.map((b) => b.lane));
     expect(barracksLanes.has(marines[0].lane)).toBe(true);
     expect(barracksLanes.has(marines[1].lane)).toBe(true);
+  });
+
+  it("facilityTracks: 반응로 건물은 2줄, 일반은 1줄", () => {
+    const withR: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "barracks" },
+      { time: 0, kind: "addon", machineId: "barracks#0", addon: "reactor" },
+      { time: 50, kind: "train_unit", unitId: "marine" },
+    ];
+    const tr = facilityTracks(withR, LOTV_PATCH).find((t) => t.machineId === "barracks#0")!;
+    expect(tr.hasReactor).toBe(true);
+    expect(tr.laneCount).toBe(2);
+
+    const noR: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "barracks" },
+      { time: 50, kind: "train_unit", unitId: "marine" },
+    ];
+    const tn = facilityTracks(noR, LOTV_PATCH).find((t) => t.machineId === "barracks#0")!;
+    expect(tn.hasReactor).toBe(false);
+    expect(tn.laneCount).toBe(1);
   });
 
   it("생산과 정지가 시간상 겹치면 서로 다른 레인", () => {

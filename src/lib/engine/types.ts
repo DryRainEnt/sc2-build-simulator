@@ -150,6 +150,16 @@ export interface QueenInjectEvent {
   kind: "inject";
 }
 
+/** 애드온 부착 — 특정 생산건물 인스턴스(machineId)에 반응로 등. */
+export interface AddonEvent {
+  time: number;
+  kind: "addon";
+  /** 대상 건물 인스턴스 id ("barracks#0" 등). */
+  machineId: string;
+  /** 애드온 종류 (현재 reactor). */
+  addon: "reactor";
+}
+
 export type BuildEvent =
   | TrainWorkerEvent
   | TrainUnitEvent
@@ -157,7 +167,8 @@ export type BuildEvent =
   | WorkerTransferEvent
   | AssignWorkerEvent
   | UnitDeathEvent
-  | QueenInjectEvent;
+  | QueenInjectEvent
+  | AddonEvent;
 
 // ── 시뮬레이션 결과 ────────────────────────────────────────────────────
 

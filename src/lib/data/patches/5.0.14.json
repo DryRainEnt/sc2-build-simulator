@@ -33,7 +33,7 @@
     "starport": { "name": "Starport", "race": "terran", "category": "building", "minerals": 150, "gas": 100, "supply": 0, "buildTime": 36, "producedFrom": ["scv"], "requires": ["factory"] },
     "fusion_core": { "name": "Fusion Core", "race": "terran", "category": "building", "minerals": 150, "gas": 150, "supply": 0, "buildTime": 46, "producedFrom": ["scv"], "requires": ["starport"] },
     "tech_lab": { "name": "Tech Lab", "race": "terran", "category": "building", "minerals": 50, "gas": 25, "supply": 0, "buildTime": 18, "producedFrom": ["barracks", "factory", "starport"], "note": "부속건물" },
-    "reactor": { "name": "Reactor", "race": "terran", "category": "building", "minerals": 50, "gas": 50, "supply": 0, "buildTime": 36, "producedFrom": ["barracks", "factory", "starport"], "note": "부속건물, 동시 2기 생산은 후속" },
+    "reactor": { "name": "Reactor", "race": "terran", "category": "building", "minerals": 50, "gas": 50, "supply": 0, "buildTime": 36, "producedFrom": ["barracks", "factory", "starport"], "hidden": true, "note": "애드온 — 건물 열 헤더에서 반응로 부착으로 배치(동시 2기)" },
     "scv": { "name": "SCV", "race": "terran", "category": "worker", "minerals": 50, "gas": 0, "supply": 1, "buildTime": 12, "producedFrom": ["command_center", "orbital_command", "planetary_fortress"] },
     "mule": { "name": "MULE", "race": "terran", "category": "unit", "minerals": 0, "gas": 0, "supply": 0, "buildTime": 0, "producedFrom": ["orbital_command"], "hidden": true, "note": "궤도사령부 소환, 채취 보정 미구현이라 숨김" },
     "marine": { "name": "Marine", "race": "terran", "category": "unit", "minerals": 50, "gas": 0, "supply": 1, "buildTime": 18, "producedFrom": ["barracks"], "requires": ["barracks"] },

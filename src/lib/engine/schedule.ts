@@ -34,7 +34,8 @@ const WARP_IN_SECONDS = 5;
 interface Machine {
   id: string;
   type: string;
-  freeTime: number; // 다음 생산 가능 시각(온라인 시각으로 초기화)
+  /** 동시 생산 슬롯들의 다음 가능 시각. 기본 1개, 반응로 부착 시 2개. */
+  slots: number[];
 }
 
 function findWorker(patch: PatchData, race: Race): UnitDef | undefined {
@@ -70,7 +71,7 @@ export function scheduleProduction(
   const createMachine = (type: string, online: number): Machine => {
     const idx = nextIdx.get(type) ?? 0;
     nextIdx.set(type, idx + 1);
-    const m: Machine = { id: `${type}#${idx}`, type, freeTime: online };
+    const m: Machine = { id: `${type}#${idx}`, type, slots: [online] };
     const arr = machinesByType.get(type);
     if (arr) arr.push(m);
     else machinesByType.set(type, [m]);
@@ -95,28 +96,19 @@ export function scheduleProduction(
     buildMachineId.set(i, m.id);
   });
 
-  // 리액터: 호환 생산건물(barracks/factory/starport)에 자동 부착 → 동시 2기(2번째 슬롯).
-  // 리액터 완성 시각에, 아직 리액터 없는 가장 이른 호환 건물에 붙는다.
-  const reactorDef = patch.units["reactor"];
-  if (reactorDef) {
-    const reactored = new Set<string>();
-    const reactors = events
-      .filter((e): e is Extract<BuildEvent, { kind: "build_structure" }> =>
-        e.kind === "build_structure" && (e as { unitId: string }).unitId === "reactor",
-      )
-      .map((e) => e.time + reactorDef.buildTime)
-      .sort((a, b) => a - b);
-    for (const completion of reactors) {
-      let target: Machine | undefined;
-      for (const type of reactorDef.producedFrom ?? []) {
-        target = (machinesByType.get(type) ?? []).find((m) => !reactored.has(m.id));
-        if (target) break;
-      }
-      if (!target) continue;
-      reactored.add(target.id);
-      const arr = machinesByType.get(target.type)!;
-      arr.push({ id: `${target.id}·R`, type: target.type, freeTime: Math.max(completion, target.freeTime) });
-    }
+  // 애드온(반응로): 지정한 건물(machineId)에 2번째 슬롯 추가. 리액터 완성 시각부터 사용 가능.
+  const findMachine = (id: string): Machine | undefined => {
+    const type = id.split("#")[0];
+    return machinesByType.get(type)?.find((m) => m.id === id);
+  };
+  const reactorBuild = patch.units["reactor"]?.buildTime ?? 0;
+  for (const e of events) {
+    if (e.kind !== "addon" || e.addon !== "reactor") continue;
+    const m = findMachine(e.machineId);
+    if (!m) continue;
+    const ready = Math.max(e.time + reactorBuild, m.slots[0]); // 건물 온라인 이후 + 리액터 완성
+    if (m.slots.length < 2) m.slots.push(ready);
+    else m.slots[1] = Math.min(m.slots[1], ready);
   }
 
   // 차원관문 연구 완료 시각(= warp_gate 건물 최소 완성). 이후 관문 유닛은 워프인.
@@ -167,12 +159,14 @@ export function scheduleProduction(
       continue;
     }
 
-    // 유닛/일꾼: producedFrom 인스턴스 중 가장 빨리 시작 가능한 곳 (생성 순서로 타이브레이크)
-    let best: { machine: Machine; start: number } | null = null;
+    // 유닛/일꾼: producedFrom 인스턴스의 슬롯 중 가장 빨리 시작 가능한 곳 (생성 순서 타이브레이크)
+    let best: { machine: Machine; slot: number; start: number } | null = null;
     for (const type of def.producedFrom ?? []) {
       for (const m of machinesByType.get(type) ?? []) {
-        const start = Math.max(e.time, m.freeTime);
-        if (!best || start < best.start) best = { machine: m, start };
+        for (let s = 0; s < m.slots.length; s++) {
+          const start = Math.max(e.time, m.slots[s]);
+          if (!best || start < best.start) best = { machine: m, slot: s, start };
+        }
       }
     }
 
@@ -195,7 +189,7 @@ export function scheduleProduction(
     // 차원관문: 관문이 워프게이트로 연구된 뒤엔 관문 유닛이 워프인(빠름), 게이트는 쿨다운(≈생산시간)
     const warp = best.machine.type === "gateway" && start >= warpDoneAt;
     const end = warp ? start + WARP_IN_SECONDS : start + def.buildTime;
-    best.machine.freeTime = start + def.buildTime; // 게이트 점유/쿨다운(근사 = 생산시간)
+    best.machine.slots[best.slot] = start + def.buildTime; // 슬롯 점유/쿨다운(근사 = 생산시간)
     out.push({
       eventIndex: i,
       unitId: def.id,
