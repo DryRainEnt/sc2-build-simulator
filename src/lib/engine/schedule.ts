@@ -28,6 +28,9 @@ export interface ScheduledProd {
 
 const PRODUCED_KINDS = new Set(["train_unit", "train_worker", "build_structure"]);
 
+/** 워프인(차원관문 소환) 소요 시간(초, 근사). 관문 유닛별 워프 쿨다운 데이터 확보 시 정밀화. */
+const WARP_IN_SECONDS = 5;
+
 interface Machine {
   id: string;
   type: string;
@@ -116,6 +119,12 @@ export function scheduleProduction(
     }
   }
 
+  // 차원관문 연구 완료 시각(= warp_gate 건물 최소 완성). 이후 관문 유닛은 워프인.
+  const warpDef = patch.units["warp_gate"];
+  const warpDoneAt = events
+    .filter((e) => e.kind === "build_structure" && (e as { unitId: string }).unitId === "warp_gate")
+    .reduce((min, e) => Math.min(min, e.time + (warpDef?.buildTime ?? 0)), Infinity);
+
   // 생산 이벤트를 큐 순서(주문 시각, 동시간은 원본 순서)로 배정
   const prod = events
     .map((e, i) => ({ e, i }))
@@ -183,8 +192,10 @@ export function scheduleProduction(
     }
 
     const start = best.start;
-    const end = start + def.buildTime;
-    best.machine.freeTime = end;
+    // 차원관문: 관문이 워프게이트로 연구된 뒤엔 관문 유닛이 워프인(빠름), 게이트는 쿨다운(≈생산시간)
+    const warp = best.machine.type === "gateway" && start >= warpDoneAt;
+    const end = warp ? start + WARP_IN_SECONDS : start + def.buildTime;
+    best.machine.freeTime = start + def.buildTime; // 게이트 점유/쿨다운(근사 = 생산시간)
     out.push({
       eventIndex: i,
       unitId: def.id,

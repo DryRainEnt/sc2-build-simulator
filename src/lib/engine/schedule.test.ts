@@ -57,6 +57,25 @@ describe("scheduleProduction — 생산 슬롯 스케줄러", () => {
     expect(marines[0].machineId).not.toBe(marines[1].machineId);
   });
 
+  it("차원관문: 연구 후 관문 유닛은 워프인(5s), 연구 전엔 일반 생산시간", () => {
+    // 관문(온라인46). 광전사 buildTime 27.
+    const base: BuildEvent[] = [{ time: 0, kind: "build_structure", unitId: "gateway" }];
+    const noWarp = scheduleProduction(
+      [...base, { time: 50, kind: "train_unit", unitId: "zealot" }],
+      LOTV_PATCH,
+      "protoss",
+    ).find((s) => s.unitId === "zealot")!;
+    expect(noWarp.end).toBe(50 + 27); // 일반 생산
+
+    const warp = scheduleProduction(
+      [...base, { time: 0, kind: "build_structure", unitId: "warp_gate" }, { time: 50, kind: "train_unit", unitId: "zealot" }],
+      LOTV_PATCH,
+      "protoss",
+    ).find((s) => s.unitId === "zealot")!;
+    expect(warp.start).toBe(50);
+    expect(warp.end).toBe(55); // 워프인 5s
+  });
+
   it("리액터: 병영 동시 2기 병렬 생산", () => {
     const events: BuildEvent[] = [
       { time: 0, kind: "build_structure", unitId: "barracks" }, // 온라인 46
