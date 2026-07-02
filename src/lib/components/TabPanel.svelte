@@ -11,6 +11,7 @@
     queueAssign,
     queueTransfer,
     queueDeath,
+    queueInject,
   } from "../stores/sim";
   import { RACES, unitsFor, producibleUnits, categoryOf } from "../patches";
   import { unitIconUrl, resourceIconUrl } from "../icons";
@@ -35,11 +36,12 @@
         ? producibleUnits($patch, faction.race)
         : unitsFor($patch, faction.race, "building");
 
-  const actions = [
+  $: actions = [
     { id: "gas1", label: "가스 일꾼 +1" },
     { id: "min1", label: "미네랄 복귀 +1" },
     { id: "pause", label: "채취 정지" },
     { id: "death", label: "일꾼 사망" },
+    ...(faction.race === "zerg" ? [{ id: "inject", label: "퀸 인젝트" }] : []),
   ];
 
   // 자원 아이콘 (한 번만 해석)
@@ -94,6 +96,9 @@
         break;
       case "death":
         queueDeath(side, cur, "worker", 1);
+        break;
+      case "inject":
+        queueInject(side, cur);
         break;
     }
   }

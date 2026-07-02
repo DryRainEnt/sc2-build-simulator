@@ -89,6 +89,8 @@ export interface PatchData {
     spawnSeconds: number;
     /** 기지(부화장/둥지/군락)당 최대 애벌레. 보통 3. */
     perBase: number;
+    /** 퀸 인젝트당 추가 애벌레 (보통 3). */
+    injectAmount?: number;
   };
   units: Record<string, UnitDef>;
 }
@@ -142,13 +144,20 @@ export interface UnitDeathEvent {
   count?: number;
 }
 
+/** 퀸 인젝트 — 부화장에 애벌레를 추가 생성(저그). */
+export interface QueenInjectEvent {
+  time: number;
+  kind: "inject";
+}
+
 export type BuildEvent =
   | TrainWorkerEvent
   | TrainUnitEvent
   | BuildStructureEvent
   | WorkerTransferEvent
   | AssignWorkerEvent
-  | UnitDeathEvent;
+  | UnitDeathEvent
+  | QueenInjectEvent;
 
 // ── 시뮬레이션 결과 ────────────────────────────────────────────────────
 

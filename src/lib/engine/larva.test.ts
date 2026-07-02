@@ -18,6 +18,21 @@ describe("computeLarva — 저그 애벌레 풀", () => {
     expect(computeLarva([], DEFAULT_PATCH, "terran").larvaAt(50)).toBe(0);
   });
 
+  it("퀸 인젝트는 애벌레 +3 (기본 상한 초과 가능)", () => {
+    const lr = computeLarva([{ time: 0, kind: "inject" }], DEFAULT_PATCH, "zerg");
+    expect(lr.larvaAt(0)).toBe(6); // 시작3 + 인젝트3
+  });
+
+  it("인젝트로 확보한 애벌레로 즉시 추가 생산", () => {
+    // 인젝트(3) + 시작(3) = 6 → 드론 6기 즉시
+    const events: BuildEvent[] = [
+      { time: 0, kind: "inject" },
+      ...drones(6),
+    ];
+    const d = scheduleProduction(events, DEFAULT_PATCH, "zerg").filter((s) => s.unitId === "drone");
+    expect(d.every((x) => x.start === 0)).toBe(true);
+  });
+
   it("애벌레 소비 후 9.9초마다 재생", () => {
     const lr = computeLarva(drones(3), DEFAULT_PATCH, "zerg"); // 3개 소비 → 0
     expect(lr.larvaAt(0)).toBe(0);

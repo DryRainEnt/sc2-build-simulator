@@ -75,31 +75,41 @@ export function computeLarva(events: BuildEvent[], patch: PatchData, race: Race)
 
   const breakpoints: { t: number; larva: number }[] = [{ t: 0, larva }];
   const startTimes = new Map<number, number>();
+  const injectAmount = patch.larva?.injectAmount ?? 3;
 
-  const larvaEvents = events
-    .map((e, i) => ({ e, i }))
-    .filter((x) => {
-      if (x.e.kind !== "train_unit") return false;
-      const d = patch.units[x.e.unitId];
-      return !!d && isLarvaUnit(d);
-    })
-    .sort((a, b) => a.e.time - b.e.time || a.i - b.i);
+  // 소비(라바 유닛)와 인젝트(애벌레 추가)를 시간순으로 병합 처리
+  type LarvaOp = { t: number; i: number; kind: "consume" | "inject"; cost: number };
+  const ops: LarvaOp[] = [];
+  events.forEach((e, i) => {
+    if (e.kind === "inject") {
+      ops.push({ t: e.time, i, kind: "inject", cost: 0 });
+    } else if (e.kind === "train_unit") {
+      const d = patch.units[e.unitId];
+      if (d && isLarvaUnit(d)) ops.push({ t: e.time, i, kind: "consume", cost: d.larvaCost ?? 1 });
+    }
+  });
+  ops.sort((a, b) => a.t - b.t || a.i - b.i);
 
-  for (const { e, i } of larvaEvents) {
-    const def = patch.units[(e as { unitId: string }).unitId]!;
-    const cost = def.larvaCost ?? 1;
-    advance(e.time);
-    let start = e.time;
-    if (larva < cost) {
-      const bases = basesAt(e.time);
+  for (const op of ops) {
+    if (op.kind === "inject") {
+      advance(op.t);
+      larva += injectAmount; // 인젝트 애벌레는 기본 상한을 초과해 쌓임
+      breakpoints.push({ t: op.t, larva });
+      continue;
+    }
+    // consume
+    advance(op.t);
+    let start = op.t;
+    if (larva < op.cost) {
+      const bases = basesAt(op.t);
       if (bases > 0) {
-        start = e.time + ((cost - larva) * spawn) / bases;
+        start = op.t + ((op.cost - larva) * spawn) / bases;
         advance(start); // 애벌레가 cost 에 도달
       }
     }
-    larva = Math.max(0, larva - cost);
+    larva = Math.max(0, larva - op.cost);
     lastT = start;
-    startTimes.set(i, start);
+    startTimes.set(op.i, start);
     breakpoints.push({ t: start, larva });
   }
   breakpoints.sort((a, b) => a.t - b.t);

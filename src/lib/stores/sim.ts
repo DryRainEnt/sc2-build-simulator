@@ -132,6 +132,10 @@ export function queueDeath(side: Side, marker: number, unitId: string, count: nu
   addEvent(side, { time: marker, kind: "unit_death", unitId, count });
 }
 
+export function queueInject(side: Side, marker: number): void {
+  addEvent(side, { time: marker, kind: "inject" });
+}
+
 /** 채취정지 이벤트의 지속시간 변경 (끝 노드 드래그). 최소 1초. */
 export function setPauseDuration(side: Side, index: number, duration: number): void {
   factions.update((f) => {

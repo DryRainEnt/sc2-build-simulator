@@ -42,6 +42,8 @@ function describe(e: BuildEvent, patch: PatchData): { key: string; label: string
       const name = patch.units[e.unitId]?.name ?? (e.unitId === "worker" ? "일꾼" : e.unitId);
       return { key: `death:${e.unitId}`, label: `${name} 사망`, unitId: e.unitId };
     }
+    case "inject":
+      return { key: "inject", label: "인젝트" };
   }
 }
 

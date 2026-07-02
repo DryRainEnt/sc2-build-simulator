@@ -43,6 +43,7 @@ export const zLarva = z
   .object({
     spawnSeconds: z.number().positive(),
     perBase: z.number().int().positive(),
+    injectAmount: z.number().positive().optional(),
   })
   .strict();
 

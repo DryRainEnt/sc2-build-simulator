@@ -30,7 +30,7 @@
 
   // 순간 행동(칩)으로 표시할 것: 일꾼 배치/사망 (채취정지는 드래그 막대로)
   const isChipAction = (e: BuildEvent) =>
-    e.kind === "assign_worker" || e.kind === "unit_death";
+    e.kind === "assign_worker" || e.kind === "unit_death" || e.kind === "inject";
 
   // 생산/건설/정지 = 기간 막대(한 레인 체계, 실제 시작~완료), 배치/사망 = 순간 칩
   $: leftBars = timelineBars($factions.left.events, $patch, $factions.left.race);
