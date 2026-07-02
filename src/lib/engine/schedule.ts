@@ -186,10 +186,12 @@ export function scheduleProduction(
     }
 
     const start = best.start;
-    // 차원관문: 관문이 워프게이트로 연구된 뒤엔 관문 유닛이 워프인(빠름), 게이트는 쿨다운(≈생산시간)
+    // 차원관문: 관문이 워프게이트로 연구된 뒤엔 관문 유닛이 워프인(빠름), 게이트는 쿨다운.
     const warp = best.machine.type === "gateway" && start >= warpDoneAt;
-    const end = warp ? start + WARP_IN_SECONDS : start + def.buildTime;
-    best.machine.slots[best.slot] = start + def.buildTime; // 슬롯 점유/쿨다운(근사 = 생산시간)
+    const warpIn = patch.warpInSeconds ?? WARP_IN_SECONDS;
+    const cooldown = def.warpCooldown ?? def.buildTime; // 5.0.16 = 생산시간
+    const end = warp ? start + warpIn : start + def.buildTime;
+    best.machine.slots[best.slot] = start + (warp ? cooldown : def.buildTime); // 슬롯 점유/쿨다운
     out.push({
       eventIndex: i,
       unitId: def.id,

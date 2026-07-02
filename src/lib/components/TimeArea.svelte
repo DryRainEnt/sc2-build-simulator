@@ -17,6 +17,7 @@
     setEventTimes,
     selectedTrack,
     selectTrack,
+    displaySettings,
   } from "../stores/sim";
   import type { BuildEvent, ResourceState } from "../engine/types";
   import type { Side } from "../stores/sim";
@@ -167,10 +168,10 @@
   {/each}
 
   <!-- 저그 애벌레 그래프 (배경 밴드) -->
-  {#if $factions.left.race === "zerg"}
+  {#if $displaySettings.showLarva && $factions.left.race === "zerg"}
     <LarvaGraph larva={leftLarva} duration={$duration} side="left" />
   {/if}
-  {#if $factions.right.race === "zerg"}
+  {#if $displaySettings.showLarva && $factions.right.race === "zerg"}
     <LarvaGraph larva={rightLarva} duration={$duration} side="right" />
   {/if}
 
@@ -183,12 +184,14 @@
   {/each}
 
   <!-- 테크 선행조건 경고 마커 (진영별) -->
+  {#if $displaySettings.showTech}
   {#each $sims.left.techWarnings as w}
     <div class="techmark left" style="top: {timeToPx(w.time)}px" title="{nameOf(w.unitId)}: 선행 부족 → {missingLabel(w.missing)}"></div>
   {/each}
   {#each $sims.right.techWarnings as w}
     <div class="techmark right" style="top: {timeToPx(w.time)}px" title="{nameOf(w.unitId)}: 선행 부족 → {missingLabel(w.missing)}"></div>
   {/each}
+  {/if}
 
   <!-- 배치된 마커 -->
   {#each $markers as m}
@@ -230,12 +233,14 @@
   {/each}
 
   <!-- 생산 건물 유휴 구간 (빗금) -->
-  {#each leftIdle as band}
-    <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; right: calc(50% + {laneOffset(band.lane)}px)" title="유휴 {Math.round(band.end - band.start)}s"></div>
-  {/each}
-  {#each rightIdle as band}
-    <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; left: calc(50% + {laneOffset(band.lane)}px)" title="유휴 {Math.round(band.end - band.start)}s"></div>
-  {/each}
+  {#if $displaySettings.showIdle}
+    {#each leftIdle as band}
+      <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; right: calc(50% + {laneOffset(band.lane)}px)" title="유휴 {Math.round(band.end - band.start)}s"></div>
+    {/each}
+    {#each rightIdle as band}
+      <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; left: calc(50% + {laneOffset(band.lane)}px)" title="유휴 {Math.round(band.end - band.start)}s"></div>
+    {/each}
+  {/if}
 
   <!-- 기간 막대: 생산(대기선→아이콘→완료원) / 채취정지(드래그 구간) -->
   {#each leftBars as bar (bar.kind + bar.eventIndex)}

@@ -123,6 +123,7 @@ export function toPatchData(full: PatchFull): PatchData {
       requires: u.requires,
       morphedFrom: u.morphedFrom,
       larvaCost: u.larvaCost,
+      warpCooldown: u.warpCooldown,
       startCount: u.startCount,
       hidden: u.hidden,
       addon: u.addon,
@@ -135,6 +136,7 @@ export function toPatchData(full: PatchFull): PatchData {
     harvest: full.harvest,
     start: full.start,
     base: full.base,
+    warpInSeconds: full.warpInSeconds,
     larva: full.larva,
     units,
   };

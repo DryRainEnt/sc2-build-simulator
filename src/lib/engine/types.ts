@@ -36,6 +36,8 @@ export interface UnitDef {
   morphedFrom?: string;
   /** 애벌레 소모량 (라바 유닛 기본 1, 저글링=0.5[라바1당 2마리]). */
   larvaCost?: number;
+  /** 차원관문 워프 쿨다운(초). 없으면 buildTime (5.0.16 관문 생산시간과 동일). */
+  warpCooldown?: number;
   /** 게임 시작 시 보유 개수 (예: 종족별 본진 건물 1). 테크 게이팅 시드용. */
   startCount?: number;
   /** UI 생산 그리드에서 숨김 (정의·계산에는 유지). 예: MULE. */
@@ -85,6 +87,8 @@ export interface PatchData {
     /** 시작 보급 상한은 종족 본진(startCount·supplyProvided)에서 엔진이 유도한다. */
   };
   base: BaseSetup;
+  /** 차원관문 워프인 소요 시간(초). 없으면 5. */
+  warpInSeconds?: number;
   /** 저그 애벌레 설정 (없으면 엔진 기본값). */
   larva?: {
     /** 애벌레 1개 생성 주기(초). 예: 5.0.16 = 9.9. */

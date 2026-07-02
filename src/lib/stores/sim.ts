@@ -50,6 +50,13 @@ export const currentMarker = writable<number | null>(null);
 /** 시간선 커서가 가리키는 시각(초). null = 벗어남. */
 export const hoverTime = writable<number | null>(null);
 
+/** 표시 설정 (편의 토글). */
+export const displaySettings = writable({
+  showIdle: true, // 생산 건물 유휴 빗금
+  showTech: true, // 테크 선행 경고 마커
+  showLarva: true, // 저그 애벌레 그래프
+});
+
 // ── 파생: 각 진영 시뮬레이션 결과 ────────────────────────────────────────
 export const sims = derived(
   [factions, patch, duration],

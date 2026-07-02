@@ -15,6 +15,7 @@
   },
   "start": { "minerals": 50, "gas": 0, "workers": 12 },
   "base": { "mineralPatches": 8, "geysers": 2 },
+  "warpInSeconds": 5,
   "larva": { "spawnSeconds": 11, "perBase": 3 },
   "units": {
     "command_center": { "name": "Command Center", "race": "terran", "category": "building", "minerals": 400, "gas": 0, "supply": 0, "supplyProvided": 15, "buildTime": 71, "producedFrom": ["scv"], "startCount": 1 },

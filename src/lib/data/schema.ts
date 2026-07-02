@@ -61,6 +61,7 @@ export const zUnit = z
     requires: z.array(z.string()).optional(),
     morphedFrom: z.string().optional(),
     larvaCost: z.number().nonnegative().optional(),
+    warpCooldown: z.number().positive().optional(),
     startCount: z.number().int().nonnegative().optional(),
     /** UI 생산 그리드에서 숨김 (정의는 유지). 예: MULE 등 능력 소환 유닛. */
     hidden: z.boolean().optional(),
@@ -86,6 +87,7 @@ export const zPatchFull = z
     harvest: zHarvest,
     start: zStart,
     base: zBase,
+    warpInSeconds: z.number().positive().optional(),
     larva: zLarva.optional(),
     units: z.record(zUnit),
   })
@@ -100,6 +102,7 @@ export const zPatchOverride = z
     harvest: zHarvest.partial().optional(),
     start: zStart.partial().optional(),
     base: zBase.partial().optional(),
+    warpInSeconds: z.number().positive().optional(),
     larva: zLarva.partial().optional(),
     units: z.record(zUnit.partial()).optional(),
   })

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { PATCHES, getPatch } from "../patches";
-  import { patch, encodeBuild, importBuild } from "../stores/sim";
+  import { patch, encodeBuild, importBuild, displaySettings } from "../stores/sim";
 
   let selectedId: string;
   $: selectedId = $patch.id;
@@ -17,7 +17,7 @@
     { id: "display", label: "표시 설정" },
   ];
 
-  let modal: "export" | "import" | null = null;
+  let modal: "export" | "import" | "display" | null = null;
   let codeText = "";
   let importError = false;
   let copied = false;
@@ -31,6 +31,8 @@
     } else if (id === "import") {
       codeText = "";
       modal = "import";
+    } else if (id === "display") {
+      modal = "display";
     } else {
       console.info(`[menu] ${id} (미구현)`);
     }
@@ -78,22 +80,33 @@
   <div class="overlay" on:click={() => (modal = null)}>
     <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
     <div class="dialog" on:click|stopPropagation>
-      <h3>{modal === "export" ? "빌드 내보내기" : "빌드 가져오기"}</h3>
-      <p class="desc">
-        {modal === "export"
-          ? "아래 코드를 복사해 공유하세요. 상대는 가져오기에 붙여넣으면 됩니다."
-          : "공유받은 빌드 코드를 붙여넣고 불러오기를 누르세요."}
-      </p>
-      <textarea bind:value={codeText} readonly={modal === "export"} spellcheck="false" placeholder="여기에 빌드 코드 붙여넣기"></textarea>
-      {#if importError}<p class="err">코드를 해석할 수 없습니다. 다시 확인해주세요.</p>{/if}
-      <div class="actions">
-        {#if modal === "export"}
-          <button class="primary" on:click={copyCode}>{copied ? "복사됨 ✓" : "복사"}</button>
-        {:else}
-          <button class="primary" on:click={doImport}>불러오기</button>
-        {/if}
-        <button on:click={() => (modal = null)}>닫기</button>
-      </div>
+      <h3>{modal === "export" ? "빌드 내보내기" : modal === "import" ? "빌드 가져오기" : "표시 설정"}</h3>
+      {#if modal === "display"}
+        <div class="settings">
+          <label><input type="checkbox" bind:checked={$displaySettings.showIdle} /> 생산 건물 유휴 하이라이트(빗금)</label>
+          <label><input type="checkbox" bind:checked={$displaySettings.showTech} /> 테크 선행조건 경고 마커</label>
+          <label><input type="checkbox" bind:checked={$displaySettings.showLarva} /> 저그 애벌레 그래프</label>
+        </div>
+        <div class="actions">
+          <button class="primary" on:click={() => (modal = null)}>닫기</button>
+        </div>
+      {:else}
+        <p class="desc">
+          {modal === "export"
+            ? "아래 코드를 복사해 공유하세요. 상대는 가져오기에 붙여넣으면 됩니다."
+            : "공유받은 빌드 코드를 붙여넣고 불러오기를 누르세요."}
+        </p>
+        <textarea bind:value={codeText} readonly={modal === "export"} spellcheck="false" placeholder="여기에 빌드 코드 붙여넣기"></textarea>
+        {#if importError}<p class="err">코드를 해석할 수 없습니다. 다시 확인해주세요.</p>{/if}
+        <div class="actions">
+          {#if modal === "export"}
+            <button class="primary" on:click={copyCode}>{copied ? "복사됨 ✓" : "복사"}</button>
+          {:else}
+            <button class="primary" on:click={doImport}>불러오기</button>
+          {/if}
+          <button on:click={() => (modal = null)}>닫기</button>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -191,6 +204,19 @@
     color: #dc2626;
     font-size: 12px;
     margin: 6px 0 0;
+  }
+  .settings {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 8px 0;
+  }
+  .settings label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
   }
   .actions {
     display: flex;
