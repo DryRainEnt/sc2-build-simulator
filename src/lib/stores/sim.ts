@@ -10,7 +10,7 @@ import { simulate } from "../engine/simulate";
 import { LOTV_PATCH } from "../data/lotv";
 import { DEFAULT_DURATION } from "../config";
 
-export type TabId = "unit" | "building" | "action";
+export type TabId = "unit" | "building" | "upgrade" | "action";
 export type Side = "left" | "right";
 
 export interface FactionState {

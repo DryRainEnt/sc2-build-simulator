@@ -111,10 +111,10 @@ export function scheduleProduction(
     else m.slots[1] = Math.min(m.slots[1], ready);
   }
 
-  // 차원관문 연구 완료 시각(= warp_gate 건물 최소 완성). 이후 관문 유닛은 워프인.
-  const warpDef = patch.units["warp_gate"];
+  // 차원관문 연구 완료 시각(= warpgate 업그레이드 최소 완성). 이후 관문 유닛은 워프인.
+  const warpDef = patch.units["warpgate"];
   const warpDoneAt = events
-    .filter((e) => e.kind === "build_structure" && (e as { unitId: string }).unitId === "warp_gate")
+    .filter((e) => e.kind === "build_structure" && (e as { unitId: string }).unitId === "warpgate")
     .reduce((min, e) => Math.min(min, e.time + (warpDef?.buildTime ?? 0)), Infinity);
 
   // 생산 이벤트를 큐 순서(주문 시각, 동시간은 원본 순서)로 배정

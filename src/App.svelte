@@ -32,7 +32,7 @@
   .sim {
     flex: 1;
     display: grid;
-    grid-template-columns: 220px 1fr 220px;
+    grid-template-columns: 320px 1fr 320px;
     min-height: 0;
     border-top: 2px solid #d4d4d8;
   }

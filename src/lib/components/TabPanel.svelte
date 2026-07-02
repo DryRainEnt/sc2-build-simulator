@@ -29,15 +29,18 @@
   const tabs: { id: TabId; label: string }[] = [
     { id: "unit", label: "유닛" },
     { id: "building", label: "건물" },
+    { id: "upgrade", label: "업글" },
     { id: "action", label: "행동" },
   ];
 
   $: prodList =
-    faction.activeTab === "action"
-      ? []
-      : faction.activeTab === "unit"
-        ? producibleUnits($patch, faction.race)
-        : unitsFor($patch, faction.race, "building");
+    faction.activeTab === "unit"
+      ? producibleUnits($patch, faction.race)
+      : faction.activeTab === "building"
+        ? unitsFor($patch, faction.race, "building")
+        : faction.activeTab === "upgrade"
+          ? unitsFor($patch, faction.race, "upgrade")
+          : [];
 
   $: actions = [
     { id: "gas1", label: "가스 일꾼 +1" },
@@ -92,7 +95,9 @@
       else queueAddon(side, sel.machineId, cur, u.id as "reactor" | "tech_lab");
       return;
     }
-    queueProduction(side, u.id, cur, categoryOf(u) === "building");
+    // 업그레이드/건물은 build_structure(연구/건설) 경로로
+    const asStructure = categoryOf(u) === "building" || categoryOf(u) === "upgrade";
+    queueProduction(side, u.id, cur, asStructure);
   }
 
   function clickAction(id: string) {
@@ -152,7 +157,7 @@
           on:mouseleave={onLeaveTip}
           title={u.addon ? `${u.name} — 건물 열 선택 후 클릭해 부착` : u.name}
         >
-          <Icon src={unitIconUrl(u.id)} label={u.name} size={34} />
+          <Icon src={unitIconUrl(u.id)} label={u.name} size={54} />
         </button>
       {/each}
       {#if prodList.length === 0}
