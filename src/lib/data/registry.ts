@@ -122,6 +122,7 @@ export function toPatchData(full: PatchFull): PatchData {
       producedFrom: u.producedFrom,
       requires: u.requires,
       morphedFrom: u.morphedFrom,
+      larvaCost: u.larvaCost,
       startCount: u.startCount,
       hidden: u.hidden,
       isWorker: u.category === "worker",
@@ -133,6 +134,7 @@ export function toPatchData(full: PatchFull): PatchData {
     harvest: full.harvest,
     start: full.start,
     base: full.base,
+    larva: full.larva,
     units,
   };
 }

@@ -39,6 +39,13 @@ export const zBase = z
   })
   .strict();
 
+export const zLarva = z
+  .object({
+    spawnSeconds: z.number().positive(),
+    perBase: z.number().int().positive(),
+  })
+  .strict();
+
 /** 유닛/건물/업그레이드 1건. id는 units 맵의 키에서 주입되므로 여기엔 없음. */
 export const zUnit = z
   .object({
@@ -53,6 +60,7 @@ export const zUnit = z
     producedFrom: z.array(z.string()).optional(),
     requires: z.array(z.string()).optional(),
     morphedFrom: z.string().optional(),
+    larvaCost: z.number().nonnegative().optional(),
     startCount: z.number().int().nonnegative().optional(),
     /** UI 생산 그리드에서 숨김 (정의는 유지). 예: MULE 등 능력 소환 유닛. */
     hidden: z.boolean().optional(),
@@ -76,6 +84,7 @@ export const zPatchFull = z
     harvest: zHarvest,
     start: zStart,
     base: zBase,
+    larva: zLarva.optional(),
     units: z.record(zUnit),
   })
   .strict();
@@ -89,6 +98,7 @@ export const zPatchOverride = z
     harvest: zHarvest.partial().optional(),
     start: zStart.partial().optional(),
     base: zBase.partial().optional(),
+    larva: zLarva.partial().optional(),
     units: z.record(zUnit.partial()).optional(),
   })
   .strict();

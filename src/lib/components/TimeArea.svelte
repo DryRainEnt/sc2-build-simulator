@@ -19,6 +19,7 @@
   import type { BuildEvent, ResourceState } from "../engine/types";
   import type { Side } from "../stores/sim";
   import { summarizeBuild, timelineBars, contiguousBlock, type TimelineBar } from "../buildSummary";
+  import { computeLarva } from "../engine/larva";
   import { unitIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
   import ResourceReadout from "./ResourceReadout.svelte";
@@ -35,6 +36,14 @@
   $: rightBars = timelineBars($factions.right.events, $patch, $factions.right.race);
   $: leftActions = summarizeBuild($factions.left.events.filter(isChipAction), $patch);
   $: rightActions = summarizeBuild($factions.right.events.filter(isChipAction), $patch);
+
+  // 저그 애벌레 (자원 표시용)
+  $: leftLarva = computeLarva($factions.left.events, $patch, $factions.left.race);
+  $: rightLarva = computeLarva($factions.right.events, $patch, $factions.right.race);
+  function lv(side: Side, t: number): number | null {
+    if ($factions[side].race !== "zerg") return null;
+    return Math.floor((side === "left" ? leftLarva : rightLarva).larvaAt(t));
+  }
 
   // 레인 → 중앙축에서의 픽셀 오프셋
   const LANE_BASE = 42;
@@ -171,8 +180,8 @@
       on:click|stopPropagation={() => selectMarker(m)}
       on:dblclick|stopPropagation={() => removeMarker(m)}
     ></button>
-    <div class="readout left" class:err={neg(ls)} style="top: {timeToPx(m)}px"><ResourceReadout s={ls} /></div>
-    <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px"><ResourceReadout s={rs} /></div>
+    <div class="readout left" class:err={neg(ls)} style="top: {timeToPx(m)}px"><ResourceReadout s={ls} larva={lv("left", m)} /></div>
+    <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px"><ResourceReadout s={rs} larva={lv("right", m)} /></div>
   {/each}
 
   <!-- 기간 막대: 생산(대기선→아이콘→완료원) / 채취정지(드래그 구간) -->
@@ -245,8 +254,8 @@
     {@const rs = $sims.right.stateAt($hoverTime)}
     <div class="guide" style="top: {timeToPx($hoverTime)}px"></div>
     <div class="hover-time" style="top: {timeToPx($hoverTime)}px">{$hoverTime}s</div>
-    <div class="readout left hover" class:err={neg(ls)} style="top: {timeToPx($hoverTime)}px"><ResourceReadout s={ls} /></div>
-    <div class="readout right hover" class:err={neg(rs)} style="top: {timeToPx($hoverTime)}px"><ResourceReadout s={rs} /></div>
+    <div class="readout left hover" class:err={neg(ls)} style="top: {timeToPx($hoverTime)}px"><ResourceReadout s={ls} larva={lv("left", $hoverTime)} /></div>
+    <div class="readout right hover" class:err={neg(rs)} style="top: {timeToPx($hoverTime)}px"><ResourceReadout s={rs} larva={lv("right", $hoverTime)} /></div>
   {/if}
   </div>
 </div>

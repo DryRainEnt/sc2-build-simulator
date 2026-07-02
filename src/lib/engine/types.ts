@@ -34,6 +34,8 @@ export interface UnitDef {
   requires?: string[];
   /** 저그 변태 원본 (예: 드론 → "larva", 스포닝풀 → "drone"). */
   morphedFrom?: string;
+  /** 애벌레 소모량 (라바 유닛 기본 1, 저글링=0.5[라바1당 2마리]). */
+  larvaCost?: number;
   /** 게임 시작 시 보유 개수 (예: 종족별 본진 건물 1). 테크 게이팅 시드용. */
   startCount?: number;
   /** UI 생산 그리드에서 숨김 (정의·계산에는 유지). 예: MULE. */
@@ -81,6 +83,13 @@ export interface PatchData {
     supplyCap: number;
   };
   base: BaseSetup;
+  /** 저그 애벌레 설정 (없으면 엔진 기본값). */
+  larva?: {
+    /** 애벌레 1개 생성 주기(초). 예: 5.0.16 = 9.9. */
+    spawnSeconds: number;
+    /** 기지(부화장/둥지/군락)당 최대 애벌레. 보통 3. */
+    perBase: number;
+  };
   units: Record<string, UnitDef>;
 }
 

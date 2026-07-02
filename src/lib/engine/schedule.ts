@@ -1,4 +1,5 @@
 import type { BuildEvent, PatchData, Race, UnitDef } from "./types";
+import { computeLarva, isLarvaUnit } from "./larva";
 
 // 생산 스케줄러 (Phase 1: 테란/프로토스 건물 슬롯).
 //
@@ -73,11 +74,14 @@ export function scheduleProduction(
     return m;
   };
 
-  // 시작 보유 생산시설(본진 등) → t=0 온라인
+  // 시작 보유 생산시설(해당 종족 본진) → t=0 온라인
   for (const u of Object.values(patch.units)) {
-    if (!facilityTypes.has(u.id)) continue;
+    if (!facilityTypes.has(u.id) || u.race !== race) continue;
     for (let k = 0; k < (u.startCount ?? 0); k++) createMachine(u.id, 0);
   }
+
+  // 저그 애벌레 풀(라바 유닛 시작 시각 계산)
+  const larva = computeLarva(events, patch, race);
   // 건설되는 생산시설(변태 제외) → 건설 완료 시각에 온라인. 건설바에 machineId 연결
   const buildMachineId = new Map<number, string>();
   events.forEach((e, i) => {
@@ -110,6 +114,22 @@ export function scheduleProduction(
         facility: machineId ? def.id : "",
         machineId,
         isBuilding: true,
+      });
+      continue;
+    }
+
+    // 저그 라바 유닛: 건물 슬롯이 아니라 애벌레 풀에서 소모 → 애벌레 확보 시각에 시작
+    if (isLarvaUnit(def)) {
+      const start = larva.startTimes.get(i) ?? e.time;
+      out.push({
+        eventIndex: i,
+        unitId: def.id,
+        orderTime: e.time,
+        start,
+        end: start + def.buildTime,
+        facility: "larva",
+        machineId: "",
+        isBuilding: false,
       });
       continue;
     }

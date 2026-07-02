@@ -5,6 +5,7 @@
   "source": "https://news.blizzard.com/en-us/article/24259080/starcraft-ii-5-0-16-patch-notes · https://news.blizzard.com/en-us/article/24289266/starcraft-ii-5-0-16-hotfix-patch-notes",
   "notes": "11년 만의 경제 재조정. 시작 일꾼 12→8. 핫픽스 생산시간: 사신32→34, 점멸광신자30→33, 고위/암흑기사43→40. 시뮬 미반영(값만 참고): 미네랄 대형1800→1600·소형900→1100, 간헐천 2250→2500→(핫픽스)2000, 리치가스 8→6, 애벌레율 9.5→9.9초, 과부하지뢰/모선 전투스탯.",
   "start": { "workers": 8 },
+  "larva": { "spawnSeconds": 9.9 },
   "units": {
     "reaper": { "buildTime": 34 },
     "adept": { "buildTime": 33 },

@@ -31,7 +31,7 @@ export function unitIconUrl(id: string | undefined): string | undefined {
 }
 
 export function resourceIconUrl(
-  kind: "minerals" | "gas" | "supply" | "time",
+  kind: "minerals" | "gas" | "supply" | "time" | "larva",
 ): string | undefined {
   return RESOURCE_ICONS[kind];
 }
