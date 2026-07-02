@@ -23,6 +23,7 @@
   import { unitIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
   import ResourceReadout from "./ResourceReadout.svelte";
+  import LarvaGraph from "./LarvaGraph.svelte";
 
   const nameOf = (id: string) => $patch.units[id]?.name ?? id;
   const missingLabel = (missing: string[]) => missing.map(nameOf).join(", ");
@@ -150,6 +151,14 @@
       <span class="tick-label">{tk}s</span>
     </div>
   {/each}
+
+  <!-- 저그 애벌레 그래프 (배경 밴드) -->
+  {#if $factions.left.race === "zerg"}
+    <LarvaGraph larva={leftLarva} duration={$duration} side="left" />
+  {/if}
+  {#if $factions.right.race === "zerg"}
+    <LarvaGraph larva={rightLarva} duration={$duration} side="right" />
+  {/if}
 
   <!-- 자원 부족 오류 마커 (진영별) -->
   {#each $sims.left.errors as err}
