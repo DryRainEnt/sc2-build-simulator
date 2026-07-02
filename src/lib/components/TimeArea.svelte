@@ -91,12 +91,10 @@
     );
     e.stopPropagation();
   }
-  function prodUp(side: Side, bar: TimelineBar, e: PointerEvent) {
+  function prodUp(e: PointerEvent) {
     if (!prodDrag) return;
     (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-    const wasClick = !prodDrag.moved;
     prodDrag = null;
-    if (wasClick) removeEventByIndex(side, bar.eventIndex);
     e.stopPropagation();
   }
 
@@ -186,7 +184,7 @@
       <div class="prod left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
         <div class="prod-dot" title="완료 {bar.end}s"></div>
-        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 드래그: 블록 이동 · 클릭: 제거" on:pointerdown={(e) => prodDown("left", bar, e)} on:pointermove={prodMove} on:pointerup={(e) => prodUp("left", bar, e)} on:click|stopPropagation={() => {}}>
+        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 드래그: 블록 이동 · 더블클릭: 제거" on:pointerdown={(e) => prodDown("left", bar, e)} on:pointermove={prodMove} on:pointerup={prodUp} on:dblclick|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
         </button>
       </div>
@@ -207,7 +205,7 @@
       <div class="prod right" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
         <div class="prod-dot" title="완료 {bar.end}s"></div>
-        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 드래그: 블록 이동 · 클릭: 제거" on:pointerdown={(e) => prodDown("right", bar, e)} on:pointermove={prodMove} on:pointerup={(e) => prodUp("right", bar, e)} on:click|stopPropagation={() => {}}>
+        <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 드래그: 블록 이동 · 더블클릭: 제거" on:pointerdown={(e) => prodDown("right", bar, e)} on:pointermove={prodMove} on:pointerup={prodUp} on:dblclick|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
         </button>
       </div>

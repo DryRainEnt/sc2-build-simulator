@@ -18,6 +18,7 @@
     height={size}
     style="width:{size}px;height:{size}px"
     loading="lazy"
+    draggable="false"
     on:error={() => (failed = true)}
   />
 {:else}
@@ -32,6 +33,8 @@
     object-fit: contain;
     vertical-align: middle;
     flex: none;
+    user-select: none;
+    -webkit-user-drag: none;
   }
   .fallback {
     display: inline-flex;
