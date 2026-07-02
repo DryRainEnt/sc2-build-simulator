@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildRegistry, resolvePatch, toPatchData, findDanglingRefs } from "./registry";
 import type { PatchFile } from "./schema";
-import { REGISTRY, DEFAULT_PATCH, RAW_PATCHES } from "./registry";
+import { REGISTRY, DEFAULT_PATCH, RAW_PATCHES, getPatchById } from "./registry";
 
 const BASE: PatchFile = {
   version: "1.0.0",
@@ -100,7 +100,24 @@ describe("패치 레지스트리 — 실데이터 로드", () => {
   it("patches/*.json 이 검증 통과해 로드된다", () => {
     expect(REGISTRY.length).toBeGreaterThan(0);
     expect(DEFAULT_PATCH.units.scv.isWorker).toBe(true);
-    expect(DEFAULT_PATCH.start.workers).toBe(12);
+  });
+
+  it("최신 기본 패치는 5.0.16 (시작 일꾼 8, 핫픽스 생산시간)", () => {
+    // 정렬상 최신이 기본값
+    expect(DEFAULT_PATCH.id).toBe("5.0.16");
+    // 시작 일꾼 12→8, 나머지 시작조건은 5.0.14 상속
+    expect(DEFAULT_PATCH.start.workers).toBe(8);
+    expect(DEFAULT_PATCH.start.minerals).toBe(50);
+    expect(DEFAULT_PATCH.start.supplyCap).toBe(15);
+    // 핫픽스 생산시간 오버라이드
+    expect(DEFAULT_PATCH.units.reaper.buildTime).toBe(34);
+    expect(DEFAULT_PATCH.units.adept.buildTime).toBe(33);
+    expect(DEFAULT_PATCH.units.high_templar.buildTime).toBe(40);
+    expect(DEFAULT_PATCH.units.dark_templar.buildTime).toBe(40);
+    // 손대지 않은 값은 상속 유지
+    expect(DEFAULT_PATCH.units.marine.buildTime).toBe(18);
+    // 5.0.14도 여전히 선택 가능(일꾼 12)
+    expect(getPatchById("5.0.14").start.workers).toBe(12);
   });
 
   it("실데이터에 오타로 인한 잘못된 참조(dangling ref)가 없다", () => {
