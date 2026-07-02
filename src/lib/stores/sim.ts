@@ -146,12 +146,23 @@ export function selectTrack(side: Side, machineId: string): void {
   );
 }
 
-/** 지정 건물에 반응로 부착 (현재 마커 시각). */
-export function queueAddon(side: Side, machineId: string, marker: number): void {
-  addEvent(side, { time: marker, kind: "addon", machineId, addon: "reactor" });
+/** 지정 건물에 애드온 부착 (현재 마커 시각). 건물당 1개 — 기존 애드온은 교체. */
+export function queueAddon(
+  side: Side,
+  machineId: string,
+  marker: number,
+  addon: "reactor" | "tech_lab",
+): void {
+  factions.update((f) => {
+    const evs = f[side].events.filter((e) => !(e.kind === "addon" && e.machineId === machineId));
+    return {
+      ...f,
+      [side]: { ...f[side], events: [...evs, { time: Math.round(marker), kind: "addon", machineId, addon }] },
+    };
+  });
 }
 
-/** 지정 건물의 반응로 애드온 제거. */
+/** 지정 건물의 애드온 제거. */
 export function removeAddon(side: Side, machineId: string): void {
   factions.update((f) => ({
     ...f,

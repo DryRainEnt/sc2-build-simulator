@@ -322,6 +322,11 @@ function computeTechWarnings(
   for (const e of events) {
     const def = producedDef(e, patch, race);
     if (def) seed(def.id, e.time + def.buildTime);
+    // 애드온(기술실 등)도 완성 시 해당 테크 충족으로 시드.
+    if (e.kind === "addon") {
+      const ad = patch.units[e.addon];
+      if (ad) seed(e.addon, e.time + ad.buildTime);
+    }
   }
 
   const warnings: TechWarning[] = [];

@@ -125,6 +125,7 @@ export function toPatchData(full: PatchFull): PatchData {
       larvaCost: u.larvaCost,
       startCount: u.startCount,
       hidden: u.hidden,
+      addon: u.addon,
       isWorker: u.category === "worker",
     };
   }

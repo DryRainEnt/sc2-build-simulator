@@ -12,6 +12,9 @@
     queueTransfer,
     queueDeath,
     queueInject,
+    queueAddon,
+    removeAddon,
+    selectedTrack,
   } from "../stores/sim";
   import { RACES, unitsFor, producibleUnits, categoryOf } from "../patches";
   import { unitIconUrl, resourceIconUrl } from "../icons";
@@ -76,9 +79,20 @@
     setRace(side, (e.currentTarget as HTMLSelectElement).value as Race);
   }
 
-  function clickUnit(unitId: string, isStructure: boolean) {
+  function clickUnit(u: UnitDef) {
     if (cur == null) return;
-    queueProduction(side, unitId, cur, isStructure);
+    if (u.addon) {
+      // 애드온: 선택된(같은 진영) 건물 열에 부착. 같은 애드온 다시 클릭 = 제거.
+      const sel = $selectedTrack;
+      if (!sel || sel.side !== side) return;
+      const existing = faction.events.find(
+        (e): e is Extract<typeof e, { kind: "addon" }> => e.kind === "addon" && e.machineId === sel.machineId,
+      );
+      if (existing && existing.addon === u.id) removeAddon(side, sel.machineId);
+      else queueAddon(side, sel.machineId, cur, u.id as "reactor" | "tech_lab");
+      return;
+    }
+    queueProduction(side, u.id, cur, categoryOf(u) === "building");
   }
 
   function clickAction(id: string) {
@@ -130,11 +144,13 @@
       {#each prodList as u}
         <button
           class="iconcell"
-          on:click={() => clickUnit(u.id, categoryOf(u) === "building")}
+          class:addon={u.addon}
+          class:armed={u.addon && $selectedTrack?.side === side}
+          on:click={() => clickUnit(u)}
           on:mouseenter={(e) => onEnter(u, e)}
           on:mousemove={onMoveTip}
           on:mouseleave={onLeaveTip}
-          title={u.name}
+          title={u.addon ? `${u.name} — 건물 열 선택 후 클릭해 부착` : u.name}
         >
           <Icon src={unitIconUrl(u.id)} label={u.name} size={34} />
         </button>
@@ -149,6 +165,9 @@
     <p class="hint">시간선을 클릭해 마커를 먼저 배치하세요</p>
   {:else}
     <p class="hint">현재 마커: {cur}s</p>
+  {/if}
+  {#if $selectedTrack?.side === side}
+    <p class="hint sel">선택: {$patch.units[$selectedTrack.machineId.split("#")[0]]?.name ?? $selectedTrack.machineId} — 기술실/반응로 클릭해 부착</p>
   {/if}
 </div>
 
@@ -239,6 +258,21 @@
   .iconcell:hover {
     background: #eef;
     border-color: #0006;
+  }
+  /* 애드온: 열 선택 전엔 흐리게, 선택되면 활성(armed) */
+  .iconcell.addon {
+    opacity: 0.5;
+    border-style: dashed;
+  }
+  .iconcell.armed {
+    opacity: 1;
+    border-style: solid;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px #2563eb33;
+  }
+  .hint.sel {
+    color: #1d4ed8;
+    font-weight: 600;
   }
   /* 행동 탭: 텍스트 버튼 */
   .cell {

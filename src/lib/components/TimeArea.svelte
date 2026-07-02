@@ -17,8 +17,6 @@
     setEventTimes,
     selectedTrack,
     selectTrack,
-    queueAddon,
-    removeAddon,
   } from "../stores/sim";
   import type { BuildEvent, ResourceState } from "../engine/types";
   import type { Side } from "../stores/sim";
@@ -51,11 +49,8 @@
   $: rightTracks = facilityTracks($factions.right.events, $patch, $factions.right.race);
   const isSelected = (side: Side, mid: string) =>
     $selectedTrack?.side === side && $selectedTrack?.machineId === mid;
-  function toggleReactor(side: Side, mid: string, hasReactor: boolean) {
-    if (hasReactor) removeAddon(side, mid);
-    else if ($currentMarker != null) queueAddon(side, mid, $currentMarker);
-  }
   const iconOfType = (type: string) => unitIconUrl(type);
+  const bandWidth = (laneCount: number) => (laneCount - 1) * LANE_W + 28;
 
   // 저그 애벌레 (자원 표시용)
   $: leftLarva = computeLarva($factions.left.events, $patch, $factions.left.race);
@@ -212,28 +207,26 @@
     <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px"><ResourceReadout s={rs} larva={lv("right", m)} /></div>
   {/each}
 
-  <!-- 건물 트랙 헤더 (클릭 선택 → 반응로 부착) -->
+  <!-- 건물 트랙: 선택 시 열 전체 세로 틴트 + 헤더(아이콘/애드온 배지) -->
   {#each leftTracks as t}
-    <button class="track-head left" class:sel={isSelected("left", t.machineId)} style="right: calc(50% + {laneOffset(t.lane)}px)" title="{$patch.units[t.type]?.name ?? t.type} · 클릭: 선택" on:click|stopPropagation={() => selectTrack("left", t.machineId)}>
-      <Icon src={iconOfType(t.type)} label={t.type} size={18} />
-      {#if t.hasReactor}<span class="rbadge">R</span>{/if}
-    </button>
     {#if isSelected("left", t.machineId)}
-      <button class="track-react left" style="right: calc(50% + {laneOffset(t.lane) + 30}px)" disabled={!t.hasReactor && $currentMarker == null} title="반응로 부착/해제 (현재 마커 시각)" on:click|stopPropagation={() => toggleReactor("left", t.machineId, t.hasReactor)}>
-        {t.hasReactor ? "−반응로" : "+반응로"}
-      </button>
+      <div class="track-tint" style="top: 0; height: {height}px; right: calc(50% + {laneOffset(t.lane)}px); width: {bandWidth(t.laneCount)}px"></div>
     {/if}
+    <button class="track-head left" class:sel={isSelected("left", t.machineId)} style="right: calc(50% + {laneOffset(t.lane)}px)" title="{$patch.units[t.type]?.name ?? t.type} · 클릭: 선택(애드온 부착)" on:click|stopPropagation={() => selectTrack("left", t.machineId)}>
+      <Icon src={iconOfType(t.type)} label={t.type} size={18} />
+      {#if t.hasReactor}<span class="rbadge react">R</span>{/if}
+      {#if t.hasTechLab}<span class="rbadge tech">T</span>{/if}
+    </button>
   {/each}
   {#each rightTracks as t}
-    <button class="track-head right" class:sel={isSelected("right", t.machineId)} style="left: calc(50% + {laneOffset(t.lane)}px)" title="{$patch.units[t.type]?.name ?? t.type} · 클릭: 선택" on:click|stopPropagation={() => selectTrack("right", t.machineId)}>
-      <Icon src={iconOfType(t.type)} label={t.type} size={18} />
-      {#if t.hasReactor}<span class="rbadge">R</span>{/if}
-    </button>
     {#if isSelected("right", t.machineId)}
-      <button class="track-react right" style="left: calc(50% + {laneOffset(t.lane) + 30}px)" disabled={!t.hasReactor && $currentMarker == null} title="반응로 부착/해제 (현재 마커 시각)" on:click|stopPropagation={() => toggleReactor("right", t.machineId, t.hasReactor)}>
-        {t.hasReactor ? "−반응로" : "+반응로"}
-      </button>
+      <div class="track-tint" style="top: 0; height: {height}px; left: calc(50% + {laneOffset(t.lane)}px); width: {bandWidth(t.laneCount)}px"></div>
     {/if}
+    <button class="track-head right" class:sel={isSelected("right", t.machineId)} style="left: calc(50% + {laneOffset(t.lane)}px)" title="{$patch.units[t.type]?.name ?? t.type} · 클릭: 선택(애드온 부착)" on:click|stopPropagation={() => selectTrack("right", t.machineId)}>
+      <Icon src={iconOfType(t.type)} label={t.type} size={18} />
+      {#if t.hasReactor}<span class="rbadge react">R</span>{/if}
+      {#if t.hasTechLab}<span class="rbadge tech">T</span>{/if}
+    </button>
   {/each}
 
   <!-- 생산 건물 유휴 구간 (빗금) -->
@@ -546,33 +539,23 @@
     font-size: 8px;
     font-weight: 800;
     color: #fff;
-    background: #16a34a;
     border-radius: 3px;
     padding: 0 2px;
     line-height: 12px;
   }
-  .track-react {
+  .rbadge.react {
+    background: #16a34a;
+  }
+  .rbadge.tech {
+    background: #2563eb;
+  }
+  /* 선택된 건물 열 세로 틴트 */
+  .track-tint {
     position: absolute;
-    top: -30px;
-    font-size: 10px;
-    padding: 2px 6px;
-    border: 1px solid #16a34a;
-    border-radius: 5px;
-    background: #dcfce7;
-    color: #166534;
-    cursor: pointer;
-    white-space: nowrap;
-    z-index: 8;
-  }
-  .track-react.left {
-    transform: translateX(50%);
-  }
-  .track-react.right {
-    transform: translateX(-50%);
-  }
-  .track-react:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    background: #2563eb14;
+    border-inline: 1px solid #2563eb44;
+    z-index: 0;
+    pointer-events: none;
   }
   /* 생산 건물 유휴 구간 (빗금) */
   .idle {

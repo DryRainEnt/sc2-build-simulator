@@ -192,6 +192,30 @@ describe("시뮬레이션 — 테크 선행조건 게이팅", () => {
     expect(r.techWarnings.find((w) => w.unitId === "engineering_bay")).toBeUndefined();
   });
 
+  it("기술실 애드온이 테크 선행조건(tech_lab)을 충족", () => {
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "supply_depot" },
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // 완성 46
+      { time: 0, kind: "addon", machineId: "barracks#0", addon: "tech_lab" }, // 완성 18
+      { time: 70, kind: "train_unit", unitId: "marauder" }, // requires barracks+tech_lab
+    ];
+    const r = simulate(events, LOTV_PATCH, { duration: 120 });
+    expect(r.techWarnings.find((w) => w.unitId === "marauder")).toBeUndefined();
+
+    // 기술실 없으면 경고
+    const noTech = simulate(
+      [
+        { time: 0, kind: "build_structure", unitId: "supply_depot" },
+        { time: 0, kind: "build_structure", unitId: "barracks" },
+        { time: 70, kind: "train_unit", unitId: "marauder" },
+      ],
+      LOTV_PATCH,
+      { duration: 120 },
+    );
+    const w = noTech.techWarnings.find((x) => x.unitId === "marauder");
+    expect(w?.missing).toContain("tech_lab");
+  });
+
   it("다중 선행조건: 전투순양함은 스타포트+테크랩+핵융합로 필요", () => {
     const r = simulate([{ time: 0, kind: "train_unit", unitId: "battlecruiser" }], LOTV_PATCH, {
       duration: 60,

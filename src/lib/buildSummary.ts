@@ -93,6 +93,7 @@ export interface FacilityTrack {
   laneCount: number; // 열 폭(1, 반응로는 2)
   onlineTime: number; // 건설 완료(또는 0=시작보유)
   hasReactor: boolean;
+  hasTechLab: boolean;
 }
 
 export interface TimelineLayout {
@@ -108,7 +109,12 @@ export interface TimelineLayout {
 export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Race = "terran"): TimelineLayout {
   const sched = scheduleProduction(events, patch, race);
   const reactored = new Set<string>();
-  for (const e of events) if (e.kind === "addon" && e.addon === "reactor") reactored.add(e.machineId);
+  const techLabbed = new Set<string>();
+  for (const e of events) {
+    if (e.kind !== "addon") continue;
+    if (e.addon === "reactor") reactored.add(e.machineId);
+    else if (e.addon === "tech_lab") techLabbed.add(e.machineId);
+  }
 
   const facMap = new Map<string, TimelineBar[]>();
   const miscBars: TimelineBar[] = [];
@@ -157,6 +163,7 @@ export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Rac
       laneCount,
       onlineTime: construction ? construction.end : 0,
       hasReactor,
+      hasTechLab: techLabbed.has(mid),
     });
     cursor += laneCount;
   }

@@ -40,6 +40,8 @@ export interface UnitDef {
   startCount?: number;
   /** UI 생산 그리드에서 숨김 (정의·계산에는 유지). 예: MULE. */
   hidden?: boolean;
+  /** 애드온(반응로/기술실) — 클릭 시 선택된 건물 열에 부착. */
+  addon?: boolean;
   /** 일꾼 여부 — 완성 시 채취 인구에 합류. category==="worker"에서 파생. */
   isWorker?: boolean;
 }
@@ -156,8 +158,8 @@ export interface AddonEvent {
   kind: "addon";
   /** 대상 건물 인스턴스 id ("barracks#0" 등). */
   machineId: string;
-  /** 애드온 종류 (현재 reactor). */
-  addon: "reactor";
+  /** 애드온 종류. */
+  addon: "reactor" | "tech_lab";
 }
 
 export type BuildEvent =

@@ -65,6 +65,8 @@ export const zUnit = z
     startCount: z.number().int().nonnegative().optional(),
     /** UI 생산 그리드에서 숨김 (정의는 유지). 예: MULE 등 능력 소환 유닛. */
     hidden: z.boolean().optional(),
+    /** 애드온(반응로/기술실) — 선택된 건물 열에 부착. */
+    addon: z.boolean().optional(),
     /** 이 항목 수치의 출처/비고 (검증 추적용). */
     note: z.string().optional(),
   })
