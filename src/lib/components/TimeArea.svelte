@@ -250,6 +250,14 @@
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
         </button>
       </div>
+    {:else if bar.kind === "addon"}
+      <div class="prod addon left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
+        <div class="prod-stem"></div>
+        <div class="prod-dot" title="완료 {bar.end}s"></div>
+        <button class="prod-icon addon-icon" class:react={bar.unitId === "reactor"} class:tech={bar.unitId === "tech_lab"} title="{bar.label} · {bar.start}s → {bar.end}s · 더블클릭: 제거" on:dblclick|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
+          <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={20} />
+        </button>
+      </div>
     {:else}
       <div class="pause left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="pause-stem"></div>
@@ -269,6 +277,14 @@
         <div class="prod-dot" title="완료 {bar.end}s"></div>
         <button class="prod-icon" title="{bar.label} · 주문 {bar.orderTime}s · 생산 {bar.start}s → {bar.end}s · 드래그: 블록 이동 · 더블클릭: 제거" on:pointerdown={(e) => prodDown("right", bar, e)} on:pointermove={prodMove} on:pointerup={prodUp} on:dblclick|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
+        </button>
+      </div>
+    {:else if bar.kind === "addon"}
+      <div class="prod addon right" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
+        <div class="prod-stem"></div>
+        <div class="prod-dot" title="완료 {bar.end}s"></div>
+        <button class="prod-icon addon-icon" class:react={bar.unitId === "reactor"} class:tech={bar.unitId === "tech_lab"} title="{bar.label} · {bar.start}s → {bar.end}s · 더블클릭: 제거" on:dblclick|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
+          <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={20} />
         </button>
       </div>
     {:else}
@@ -507,6 +523,17 @@
   .prod-icon:hover {
     border-color: #2563eb;
     background: #dbeafe;
+  }
+  .addon-icon {
+    cursor: pointer;
+  }
+  .addon-icon.react {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 1px #16a34a55;
+  }
+  .addon-icon.tech {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px #2563eb55;
   }
   /* 건물 트랙 헤더 */
   .track-head {

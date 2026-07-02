@@ -53,7 +53,7 @@ function describe(e: BuildEvent, patch: PatchData): { key: string; label: string
 // 생산/건설 = 아이콘(시작)+완료원, 채취정지 = 드래그 가능한 정지 구간.
 // 생산 시작은 스케줄러(슬롯 배정)로 계산 — 건물 바쁘면 마커보다 아래로 밀림.
 export interface TimelineBar {
-  kind: "prod" | "pause";
+  kind: "prod" | "pause" | "addon";
   start: number; // 막대 시작 시각(prod: 실제 생산 시작, pause: 정지 시작)
   end: number; // 막대 끝 시각
   orderTime: number; // 주문(마커) 시각 = 자원 소모 지점
@@ -137,6 +137,28 @@ export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Rac
       else facMap.set(s.machineId, [bar]);
     } else miscBars.push(bar);
   }
+
+  // 애드온(반응로/기술실) 건설 막대 — 대상 건물 열에 배치
+  events.forEach((e, i) => {
+    if (e.kind !== "addon") return;
+    const def = patch.units[e.addon];
+    if (!def) return;
+    const bar: TimelineBar = {
+      kind: "addon",
+      start: e.time,
+      end: e.time + def.buildTime,
+      orderTime: e.time,
+      lane: 0,
+      eventIndex: i,
+      label: def.name,
+      unitId: e.addon,
+      machineId: e.machineId,
+      isBuilding: false,
+    };
+    const arr = facMap.get(e.machineId);
+    if (arr) arr.push(bar);
+    else facMap.set(e.machineId, [bar]);
+  });
 
   // 건물별 첫 등장 시각 순으로 열 할당 (반응로면 2줄 예약)
   const firstStart = (mid: string) => Math.min(...facMap.get(mid)!.map((b) => b.start));
