@@ -10,6 +10,8 @@ const BASE: PatchFile = {
     mineralPerWorker: 0.6667,
     mineralPerWorkerSaturated: 0.3333,
     gasPerWorker: 0.6333,
+    mineralsPerTrip: 5,
+    gasPerTrip: 4,
     workersPerMineralPatch: 2,
     maxWorkersPerMineralPatch: 3,
     maxWorkersPerGeyser: 3,

@@ -30,14 +30,23 @@ type Op =
 
 interface Segment {
   start: number;
-  minerals: number;
-  gas: number;
+  /** 구간 시작까지 채취한 자원 누적(연속·소모 미반영). stateAt에서 왕복 단위로 절삭. */
+  minedMin: number;
+  minedGas: number;
+  /** 구간 시작까지 소모(생산 주문) 누적. */
+  spentMin: number;
+  spentGas: number;
   mineralRate: number;
   gasRate: number;
   supplyUsed: number;
   supplyCap: number;
   mineralWorkers: number;
   gasWorkers: number;
+}
+
+/** 채취분을 왕복 단위(step)로 절삭 — 일꾼이 한 번 왕복해야 그만큼 실제 반영. */
+function quantize(amount: number, step: number): number {
+  return step > 0 ? Math.floor(amount / step) * step : amount;
 }
 
 function findWorker(patch: PatchData, race: Race): UnitDef {
@@ -116,9 +125,14 @@ export function simulate(
 
   const ops = buildOps(events, patch, race, duration);
 
-  // 라이브 상태
-  let minerals = patch.start.minerals;
-  let gas = patch.start.gas;
+  const perTripMin = model.mineralsPerTrip;
+  const perTripGas = model.gasPerTrip;
+
+  // 라이브 상태 (채취 누적/소모 누적 분리)
+  let minedMin = 0;
+  let minedGas = 0;
+  let spentMin = 0;
+  let spentGas = 0;
   let supplyUsed = patch.start.workers;
   let supplyCap = patch.start.supplyCap;
   let mineralWorkers = patch.start.workers;
@@ -134,8 +148,8 @@ export function simulate(
   const applyOp = (op: Op) => {
     switch (op.type) {
       case "spend":
-        minerals -= op.minerals;
-        gas -= op.gas;
+        spentMin += op.minerals;
+        spentGas += op.gas;
         break;
       case "complete":
         if (op.def.isWorker) {
@@ -192,30 +206,34 @@ export function simulate(
 
   for (let k = 0; k < times.length; k++) {
     const t = times[k];
-    // 직전 구간 [prevStart, t] 적분
+    // 직전 구간 [prevStart, t] 채취 적분 (연속 누적)
     if (k > 0) {
       const dt = t - prevStart;
-      minerals += prevRates.mineralRate * dt;
-      gas += prevRates.gasRate * dt;
+      minedMin += prevRates.mineralRate * dt;
+      minedGas += prevRates.gasRate * dt;
     }
     // 이 시각의 모든 op 적용
     while (idx < ops.length && ops[idx].t === t) {
       applyOp(ops[idx]);
       idx++;
     }
-    // 부족 검사 (소모 반영 직후)
-    if (minerals < 0) {
-      errors.push({ time: t, resource: "minerals", deficit: -minerals });
+    // 부족 검사 (소모 반영 직후, 채취는 왕복 단위로 절삭한 실보유 기준)
+    const availMin = patch.start.minerals + quantize(minedMin, perTripMin) - spentMin;
+    const availGas = patch.start.gas + quantize(minedGas, perTripGas) - spentGas;
+    if (availMin < 0) {
+      errors.push({ time: t, resource: "minerals", deficit: -availMin });
     }
-    if (gas < 0) {
-      errors.push({ time: t, resource: "gas", deficit: -gas });
+    if (availGas < 0) {
+      errors.push({ time: t, resource: "gas", deficit: -availGas });
     }
     // 새 구간의 rate 확정 및 세그먼트 기록
     const r = rates();
     segments.push({
       start: t,
-      minerals,
-      gas,
+      minedMin,
+      minedGas,
+      spentMin,
+      spentGas,
       mineralRate: r.mineralRate,
       gasRate: r.gasRate,
       supplyUsed,
@@ -231,9 +249,11 @@ export function simulate(
     const tc = Math.max(0, Math.min(duration, time));
     const seg = segmentAt(segments, tc);
     const dt = tc - seg.start;
+    const rawMin = seg.minedMin + seg.mineralRate * dt;
+    const rawGas = seg.minedGas + seg.gasRate * dt;
     return {
-      minerals: seg.minerals + seg.mineralRate * dt,
-      gas: seg.gas + seg.gasRate * dt,
+      minerals: patch.start.minerals + quantize(rawMin, perTripMin) - seg.spentMin,
+      gas: patch.start.gas + quantize(rawGas, perTripGas) - seg.spentGas,
       supplyUsed: seg.supplyUsed,
       supplyCap: seg.supplyCap,
       workers: seg.mineralWorkers + seg.gasWorkers,

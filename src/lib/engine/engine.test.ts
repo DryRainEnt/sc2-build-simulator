@@ -39,9 +39,21 @@ describe("시뮬레이션 — 기본 경제", () => {
     expect(s0.supplyUsed).toBe(12);
     expect(s0.supplyCap).toBe(15);
 
-    // 12 * 40/60 = 8/초 → 60초 후 50 + 480 = 530
+    // 12 * 40/60 = 8/초 → 60초 후 50 + 480 = 530 (480은 5의 배수라 절삭 영향 없음)
     expect(r.stateAt(60).minerals).toBeCloseTo(530, 6);
     expect(r.errors).toHaveLength(0);
+  });
+
+  it("채취는 왕복 단위(미네랄 5)로 잘려서 들어온다 (연속 아님)", () => {
+    const r = simulate([], LOTV_PATCH, { duration: 30 });
+    // 12일꾼 8/초. t=1 → 채취 8 → 5로 절삭 → 50+5=55 (연속이면 58)
+    expect(r.stateAt(1).minerals).toBe(55);
+    // t=2 → 채취 16 → 15 → 65
+    expect(r.stateAt(2).minerals).toBe(65);
+    // 항상 5의 배수(시작 50이 5배수 + 절삭분 5배수)
+    for (const t of [3, 7, 13, 21]) {
+      expect(r.stateAt(t).minerals % 5).toBe(0);
+    }
   });
 
   it("일꾼 생산: 완성 시점에 채취 인구 합류 + 수입 증가", () => {
@@ -55,8 +67,10 @@ describe("시뮬레이션 — 기본 경제", () => {
     expect(r.stateAt(12).workers).toBe(13);
     expect(r.stateAt(12).supplyUsed).toBe(13);
 
-    // 0~12초: 12일꾼(8/s) → 96. 12~60초(48초): 13일꾼(13*40/60=8.667/s) → 416
-    const expected = 0 + 8 * 12 + 13 * (40 / 60) * 48;
+    // 0~12초: 12일꾼(8/s) → 96. 12~60초(48초): 13일꾼(13*40/60=8.667/s) → 416.
+    // 채취분(512)은 왕복 단위(5) 절삭 → 510. 시작50 - 생산50 = 0. ⇒ 510
+    const rawMined = 8 * 12 + 13 * (40 / 60) * 48; // 512
+    const expected = Math.floor(rawMined / 5) * 5; // 510
     expect(r.stateAt(60).minerals).toBeCloseTo(expected, 6);
   });
 });
@@ -121,7 +135,8 @@ describe("시뮬레이션 — 일꾼 이동/재배치/사망", () => {
     const s = r.stateAt(60);
     expect(s.gasWorkers).toBe(3);
     expect(s.mineralWorkers).toBe(9);
-    expect(s.gas).toBeCloseTo(3 * (38 / 60) * 60, 6); // 114
+    // 채취 114를 가스 왕복 단위(4)로 절삭 → 112
+    expect(s.gas).toBeCloseTo(Math.floor((3 * (38 / 60) * 60) / 4) * 4, 6); // 112
   });
 
   it("일꾼 사망 시 채취 인구와 보급이 감소", () => {
