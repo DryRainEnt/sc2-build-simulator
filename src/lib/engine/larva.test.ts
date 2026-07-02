@@ -37,14 +37,16 @@ describe("scheduleProduction — 애벌레 게이팅", () => {
     expect(d[3].facility).toBe("larva");
   });
 
-  it("저글링 0.5 애벌레: 3라바로 6마리 즉시, 7번째는 0.5재생 대기", () => {
-    const events: BuildEvent[] = Array.from({ length: 7 }, () => ({
+  it("저글링 1클릭=쌍(애벌레 1): 3라바로 3쌍 즉시, 4번째는 재생 대기", () => {
+    const events: BuildEvent[] = Array.from({ length: 4 }, () => ({
       time: 0,
       kind: "train_unit",
       unitId: "zergling",
     }));
     const z = scheduleProduction(events, DEFAULT_PATCH, "zerg").filter((s) => s.unitId === "zergling");
-    for (let i = 0; i < 6; i++) expect(z[i].start).toBe(0);
-    expect(z[6].start).toBeCloseTo(0.5 * 9.9, 5); // 0.5 애벌레 재생 = 4.95초
+    expect(z[0].start).toBe(0);
+    expect(z[1].start).toBe(0);
+    expect(z[2].start).toBe(0);
+    expect(z[3].start).toBeCloseTo(9.9, 5); // 애벌레 1 재생 대기
   });
 });
