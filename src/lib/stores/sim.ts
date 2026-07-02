@@ -1,4 +1,4 @@
-import { derived, writable } from "svelte/store";
+import { derived, get, writable } from "svelte/store";
 import type {
   BuildEvent,
   PatchData,
@@ -7,8 +7,7 @@ import type {
   SimulationResult,
 } from "../engine/types";
 import { simulate } from "../engine/simulate";
-import { LOTV_PATCH } from "../data/lotv";
-import { DEFAULT_DURATION } from "../config";
+import { DEFAULT_PATCH, getPatchById } from "../data/registry";
 
 export type TabId = "unit" | "building" | "upgrade" | "action";
 export type Side = "left" | "right";
@@ -24,8 +23,8 @@ function emptyFaction(race: Race): FactionState {
 }
 
 // ── 스토어 ─────────────────────────────────────────────────────────────
-export const patch = writable<PatchData>(LOTV_PATCH);
-export const duration = writable<number>(DEFAULT_DURATION);
+// 앱 기본 패치는 최신(정렬상 마지막). 테스트는 LOTV_PATCH(5.0.14) 별도 사용.
+export const patch = writable<PatchData>(DEFAULT_PATCH);
 
 export const factions = writable<Record<Side, FactionState>>({
   left: emptyFaction("terran"),
@@ -37,6 +36,15 @@ export const selectedTrack = writable<{ side: Side; machineId: string } | null>(
 
 /** 배치된 마커 시각들 (양 진영 공유, 오름차순). */
 export const markers = writable<number[]>([]);
+
+/** 시간선 길이(초): 콘텐츠가 300초를 넘기면 600초로 확장. */
+export const duration = derived([factions, markers], ([$f, $m]) => {
+  let max = 0;
+  for (const t of $m) if (t > max) max = t;
+  for (const e of $f.left.events) if (e.time > max) max = e.time;
+  for (const e of $f.right.events) if (e.time > max) max = e.time;
+  return max > 280 ? 600 : 300;
+});
 /** 현재 선택된(활성) 마커 시각 — 유닛 클릭 시 생산이 배치되는 지점. */
 export const currentMarker = writable<number | null>(null);
 /** 시간선 커서가 가리키는 시각(초). null = 벗어남. */
@@ -203,4 +211,41 @@ export function removeEventByIndex(side: Side, index: number): void {
     if (index >= 0 && index < evs.length) evs.splice(index, 1);
     return { ...f, [side]: { ...f[side], events: evs } };
   });
+}
+
+// ── 빌드 공유 코드 (패치/종족/빌드를 텍스트로 인코딩) ─────────────────────
+// base64(UTF-8 JSON). 텍스트만 복붙하면 그대로 불러올 수 있다.
+
+/** 현재 빌드를 공유 코드 문자열로 인코딩. */
+export function encodeBuild(): string {
+  const p = get(patch);
+  const f = get(factions);
+  const m = get(markers);
+  const data = {
+    v: 1,
+    patch: p.id,
+    L: { r: f.left.race, e: f.left.events },
+    R: { r: f.right.race, e: f.right.events },
+    m,
+  };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+}
+
+/** 공유 코드에서 빌드를 불러온다. 성공하면 true. */
+export function importBuild(code: string): boolean {
+  try {
+    const data = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    if (data.v !== 1 || !data.L || !data.R) return false;
+    patch.set(getPatchById(data.patch));
+    factions.set({
+      left: { race: data.L.r, events: Array.isArray(data.L.e) ? data.L.e : [], activeTab: "unit" },
+      right: { race: data.R.r, events: Array.isArray(data.R.e) ? data.R.e : [], activeTab: "unit" },
+    });
+    markers.set(Array.isArray(data.m) ? data.m : []);
+    currentMarker.set(null);
+    selectedTrack.set(null);
+    return true;
+  } catch {
+    return false;
+  }
 }
