@@ -21,7 +21,7 @@ export interface SimulateOptions {
 // 일부 op(일꾼 재배치/사망)는 그 시점의 라이브 상태에 의존하므로,
 // 고정 숫자 델타가 아니라 walk 중에 가변 상태를 참조해 적용한다.
 type Op =
-  | { t: number; type: "spend"; minerals: number; gas: number }
+  | { t: number; type: "spend"; minerals: number; gas: number; supply: number }
   | { t: number; type: "complete"; def: UnitDef }
   | { t: number; type: "pauseStart"; resource: "minerals" | "gas"; workers: number }
   | { t: number; type: "pauseEnd"; resource: "minerals" | "gas"; workers: number }
@@ -63,8 +63,8 @@ function buildOps(events: BuildEvent[], patch: PatchData, race: Race, duration: 
   };
 
   const emitProduction = (t: number, def: UnitDef) => {
-    // 주문 시점에 자원 소모, 완성 시점에 유닛/보급 반영.
-    push({ t, type: "spend", minerals: def.minerals, gas: def.gas });
+    // 주문 시점에 자원 + 보급(인구) 소모, 완성 시점에 유닛 등장/보급 공급.
+    push({ t, type: "spend", minerals: def.minerals, gas: def.gas, supply: def.supply });
     push({ t: t + def.buildTime, type: "complete", def });
   };
 
@@ -150,15 +150,12 @@ export function simulate(
       case "spend":
         spentMin += op.minerals;
         spentGas += op.gas;
+        supplyUsed += op.supply; // 인구는 생산 시작 시점에 소모(예약)
         break;
       case "complete":
-        if (op.def.isWorker) {
-          mineralWorkers += 1; // 완성된 일꾼은 기본적으로 미네랄에 합류
-          supplyUsed += op.def.supply;
-        } else {
-          supplyUsed += op.def.supply;
-          if (op.def.supplyProvided) supplyCap += op.def.supplyProvided;
-        }
+        // 완성 시점: 일꾼은 채취 합류, 보급 건물은 보급 공급 (소모는 이미 시작 때 반영)
+        if (op.def.isWorker) mineralWorkers += 1;
+        if (op.def.supplyProvided) supplyCap += op.def.supplyProvided;
         break;
       case "pauseStart":
         if (op.resource === "minerals") pausedMineral += op.workers;

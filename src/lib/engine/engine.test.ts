@@ -203,6 +203,18 @@ describe("시뮬레이션 — 테크 선행조건 게이팅", () => {
 });
 
 describe("시뮬레이션 — 보급 공급", () => {
+  it("보급(인구)은 생산 시작 시점에 소모된다 (완성 대기 아님)", () => {
+    const r = simulate([{ time: 0, kind: "train_unit", unitId: "scv" }], LOTV_PATCH, {
+      duration: 30,
+    });
+    // 시작 즉시 12+1 소모, 완성(12s) 전에도 유지
+    expect(r.stateAt(0).supplyUsed).toBe(13);
+    expect(r.stateAt(5).supplyUsed).toBe(13);
+    // 단, 채취 인구는 완성 후에 합류
+    expect(r.stateAt(5).workers).toBe(12);
+    expect(r.stateAt(12).workers).toBe(13);
+  });
+
   it("서플라이 디폿 완성 시 보급 최대치 증가", () => {
     const events: BuildEvent[] = [
       { time: 0, kind: "build_structure", unitId: "supply_depot" },
