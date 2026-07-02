@@ -18,7 +18,7 @@
   } from "../stores/sim";
   import type { BuildEvent, ResourceState } from "../engine/types";
   import type { Side } from "../stores/sim";
-  import { summarizeBuild, timelineBars, contiguousBlock, type TimelineBar } from "../buildSummary";
+  import { summarizeBuild, timelineBars, contiguousBlock, idleIntervals, type TimelineBar } from "../buildSummary";
   import { computeLarva } from "../engine/larva";
   import { unitIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
@@ -37,6 +37,10 @@
   $: rightBars = timelineBars($factions.right.events, $patch, $factions.right.race);
   $: leftActions = summarizeBuild($factions.left.events.filter(isChipAction), $patch);
   $: rightActions = summarizeBuild($factions.right.events.filter(isChipAction), $patch);
+
+  // 생산 건물 유휴 구간(빌드 최적화용)
+  $: leftIdle = idleIntervals(leftBars);
+  $: rightIdle = idleIntervals(rightBars);
 
   // 저그 애벌레 (자원 표시용)
   $: leftLarva = computeLarva($factions.left.events, $patch, $factions.left.race);
@@ -191,6 +195,14 @@
     ></button>
     <div class="readout left" class:err={neg(ls)} style="top: {timeToPx(m)}px"><ResourceReadout s={ls} larva={lv("left", m)} /></div>
     <div class="readout right" class:err={neg(rs)} style="top: {timeToPx(m)}px"><ResourceReadout s={rs} larva={lv("right", m)} /></div>
+  {/each}
+
+  <!-- 생산 건물 유휴 구간 (빗금) -->
+  {#each leftIdle as band}
+    <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; right: calc(50% + {laneOffset(band.lane)}px)" title="유휴 {Math.round(band.end - band.start)}s"></div>
+  {/each}
+  {#each rightIdle as band}
+    <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; left: calc(50% + {laneOffset(band.lane)}px)" title="유휴 {Math.round(band.end - band.start)}s"></div>
   {/each}
 
   <!-- 기간 막대: 생산(대기선→아이콘→완료원) / 채취정지(드래그 구간) -->
@@ -463,6 +475,21 @@
   .prod-icon:hover {
     border-color: #2563eb;
     background: #dbeafe;
+  }
+  /* 생산 건물 유휴 구간 (빗금) */
+  .idle {
+    position: absolute;
+    width: 26px;
+    z-index: 1;
+    border-radius: 3px;
+    background: repeating-linear-gradient(
+      45deg,
+      #fca5a555,
+      #fca5a555 4px,
+      #fca5a522 4px,
+      #fca5a522 8px
+    );
+    pointer-events: none;
   }
   /* 생산 큐 대기선 (주문~실제시작, 건물 바쁨) */
   .prod-wait {

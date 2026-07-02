@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { summarizeBuild, timelineBars, contiguousBlock } from "./buildSummary";
+import { summarizeBuild, timelineBars, contiguousBlock, idleIntervals } from "./buildSummary";
 import { LOTV_PATCH } from "./data/lotv";
 import type { BuildEvent } from "./engine/types";
 
@@ -120,6 +120,27 @@ describe("contiguousBlock — 드래그 이동 블록", () => {
     // 병영 건설바를 잡으면 건설 + 그 뒤 마린 전부
     const barracksBar = bars.find((b) => b.unitId === "barracks")!;
     expect(contiguousBlock(bars, barracksBar).sort()).toEqual([0, 1, 2, 3]);
+  });
+
+  it("생산 사이 유휴 구간 검출", () => {
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // 온라인 46
+      { time: 10, kind: "train_unit", unitId: "marine" }, // 46~64
+      { time: 100, kind: "train_unit", unitId: "marine" }, // 100~118
+    ];
+    const idle = idleIntervals(timelineBars(events, LOTV_PATCH));
+    expect(idle).toHaveLength(1);
+    expect(idle[0]).toMatchObject({ start: 64, end: 100 }); // 병영 놀던 구간
+  });
+
+  it("온라인 후 첫 생산까지도 유휴", () => {
+    const events: BuildEvent[] = [
+      { time: 0, kind: "build_structure", unitId: "barracks" }, // 온라인 46
+      { time: 100, kind: "train_unit", unitId: "marine" }, // 100~
+    ];
+    const idle = idleIntervals(timelineBars(events, LOTV_PATCH));
+    expect(idle).toHaveLength(1);
+    expect(idle[0]).toMatchObject({ start: 46, end: 100 });
   });
 
   it("틈(idle)이 있으면 거기서 블록이 끊긴다", () => {

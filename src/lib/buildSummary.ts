@@ -141,6 +141,40 @@ export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race 
   return [...facilityBars, ...miscBars];
 }
 
+export interface IdleBand {
+  lane: number;
+  start: number;
+  end: number;
+}
+
+/**
+ * 생산 건물이 노는(유휴) 구간 — 온라인(건설 완료/시작) 이후 마지막 생산 전까지의 빈 시간.
+ * 각 건물 트랙별로 계산. minGap 이상만 반환.
+ */
+export function idleIntervals(bars: TimelineBar[], minGap = 1): IdleBand[] {
+  const byMachine = new Map<string, TimelineBar[]>();
+  for (const b of bars) {
+    if (b.kind !== "prod" || !b.machineId) continue;
+    const arr = byMachine.get(b.machineId);
+    if (arr) arr.push(b);
+    else byMachine.set(b.machineId, [b]);
+  }
+  const out: IdleBand[] = [];
+  for (const mbars of byMachine.values()) {
+    const lane = mbars[0].lane;
+    const construction = mbars.find((b) => b.isBuilding);
+    const online = construction ? construction.end : 0;
+    const prod = mbars.filter((b) => !b.isBuilding).sort((a, b) => a.start - b.start);
+    if (!prod.length) continue;
+    let cursor = online;
+    for (const b of prod) {
+      if (b.start - cursor >= minGap) out.push({ lane, start: cursor, end: b.start });
+      cursor = Math.max(cursor, b.end);
+    }
+  }
+  return out;
+}
+
 /**
  * 드래그 이동 대상 = 대상 막대 + 같은 건물에서 틈 없이(back-to-back) 뒤에 붙은 생산들.
  * @returns 이동할 이벤트들의 eventIndex 배열
