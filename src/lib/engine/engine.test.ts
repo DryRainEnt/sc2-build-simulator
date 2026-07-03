@@ -24,9 +24,13 @@ describe("채취율 모델 (harvest)", () => {
     expect(mineralIncomePerSec(30, 8, M)).toBeCloseTo(full, 6);
   });
 
-  it("가스는 간헐천당 최대 3기까지 선형, 초과는 유휴", () => {
-    expect(gasIncomePerSec(6, 2, M)).toBeCloseTo(6 * (38 / 60), 6);
-    expect(gasIncomePerSec(10, 2, M)).toBeCloseTo(6 * (38 / 60), 6);
+  it("가스: 간헐천당 앞 2기 고효율 + 3번째 포화, 초과는 유휴", () => {
+    // 단일 일꾼은 고효율(≈43.6/분, 왕복 5.5초)
+    expect(gasIncomePerSec(1, 1, M)).toBeCloseTo(M.gasPerWorker, 6);
+    // 2간헐천 = 정상 슬롯 4 + 포화 슬롯 2
+    const full = 4 * M.gasPerWorker + 2 * M.gasPerWorkerSaturated;
+    expect(gasIncomePerSec(6, 2, M)).toBeCloseTo(full, 6);
+    expect(gasIncomePerSec(10, 2, M)).toBeCloseTo(full, 6); // 초과 유휴
   });
 });
 
@@ -135,8 +139,8 @@ describe("시뮬레이션 — 일꾼 이동/재배치/사망", () => {
     const s = r.stateAt(60);
     expect(s.gasWorkers).toBe(3);
     expect(s.mineralWorkers).toBe(9);
-    // 채취 114를 가스 왕복 단위(4)로 절삭 → 112
-    expect(s.gas).toBeCloseTo(Math.floor((3 * (38 / 60) * 60) / 4) * 4, 6); // 112
+    // 2간헐천 → 3기 전원 정상 슬롯 → 3×gasPerWorker, 가스 왕복(4)으로 절삭
+    expect(s.gas).toBeCloseTo(Math.floor((3 * M.gasPerWorker * 60) / 4) * 4, 6);
   });
 
   it("일꾼 사망 시 채취 인구와 보급이 감소", () => {

@@ -54,11 +54,13 @@
           <legend>채취/자원</legend>
           <label>패치당 일꾼 채취/초 <input type="number" step="0.001" bind:value={draft.harvest.mineralPerWorker} /></label>
           <label>포화 3번째/초 <input type="number" step="0.001" bind:value={draft.harvest.mineralPerWorkerSaturated} /></label>
-          <label>가스 일꾼/초 <input type="number" step="0.001" bind:value={draft.harvest.gasPerWorker} /></label>
+          <label>가스 일꾼/초(1·2번째) <input type="number" step="0.001" bind:value={draft.harvest.gasPerWorker} /></label>
+          <label>가스 포화/초(3번째) <input type="number" step="0.001" bind:value={draft.harvest.gasPerWorkerSaturated} /></label>
           <label>미네랄 왕복량 <input type="number" bind:value={draft.harvest.mineralsPerTrip} /></label>
           <label>가스 왕복량 <input type="number" bind:value={draft.harvest.gasPerTrip} /></label>
           <label>패치당 정상 일꾼 <input type="number" bind:value={draft.harvest.workersPerMineralPatch} /></label>
           <label>패치당 최대 일꾼 <input type="number" bind:value={draft.harvest.maxWorkersPerMineralPatch} /></label>
+          <label>간헐천 정상 일꾼 <input type="number" bind:value={draft.harvest.workersPerGeyser} /></label>
           <label>간헐천 최대 일꾼 <input type="number" bind:value={draft.harvest.maxWorkersPerGeyser} /></label>
         </fieldset>
         <fieldset>

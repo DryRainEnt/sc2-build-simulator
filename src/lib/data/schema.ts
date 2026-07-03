@@ -15,10 +15,12 @@ export const zHarvest = z
     mineralPerWorker: z.number().nonnegative(),
     mineralPerWorkerSaturated: z.number().nonnegative(),
     gasPerWorker: z.number().nonnegative(),
+    gasPerWorkerSaturated: z.number().nonnegative(),
     mineralsPerTrip: z.number().positive(),
     gasPerTrip: z.number().positive(),
     workersPerMineralPatch: z.number().int().positive(),
     maxWorkersPerMineralPatch: z.number().int().positive(),
+    workersPerGeyser: z.number().int().positive(),
     maxWorkersPerGeyser: z.number().int().positive(),
   })
   .strict();

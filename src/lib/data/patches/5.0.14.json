@@ -6,11 +6,13 @@
   "harvest": {
     "mineralPerWorker": 0.6666666667,
     "mineralPerWorkerSaturated": 0.3333333333,
-    "gasPerWorker": 0.6333333333,
+    "gasPerWorker": 0.7261904762,
+    "gasPerWorkerSaturated": 0.4761904762,
     "mineralsPerTrip": 5,
     "gasPerTrip": 4,
     "workersPerMineralPatch": 2,
     "maxWorkersPerMineralPatch": 3,
+    "workersPerGeyser": 2,
     "maxWorkersPerGeyser": 3
   },
   "start": { "minerals": 50, "gas": 0, "workers": 12 },

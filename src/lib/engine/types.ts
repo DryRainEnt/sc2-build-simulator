@@ -54,8 +54,10 @@ export interface HarvestModel {
   mineralPerWorker: number;
   /** 미네랄 패치 1개당 3번째(포화 초과) 일꾼의 초당 채취량. */
   mineralPerWorkerSaturated: number;
-  /** 가스 간헐천 1개당 일꾼(최대 3기)의 초당 채취량. */
+  /** 가스 간헐천 1개당 1~2번째 일꾼의 초당 채취량. */
   gasPerWorker: number;
+  /** 가스 간헐천 1개당 3번째(포화) 일꾼의 초당 채취량. */
+  gasPerWorkerSaturated: number;
   /** 일꾼 1회 왕복당 미네랄 획득량(보통 5). 이 단위로 절삭 반영. */
   mineralsPerTrip: number;
   /** 일꾼 1회 왕복당 가스 획득량(보통 4). */
@@ -64,6 +66,8 @@ export interface HarvestModel {
   workersPerMineralPatch: number;
   /** 패치당 최대 일꾼 수 (보통 3). */
   maxWorkersPerMineralPatch: number;
+  /** 간헐천당 정상 채취 일꾼 슬롯 수 (보통 2). */
+  workersPerGeyser: number;
   /** 간헐천당 최대 일꾼 수 (보통 3). */
   maxWorkersPerGeyser: number;
 }
