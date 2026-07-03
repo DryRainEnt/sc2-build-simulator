@@ -59,20 +59,25 @@
   let hovered: UnitDef | null = null;
   let tx = 0;
   let ty = 0;
+  let flip = false; // 커서 왼쪽으로 띄우기(우측 진영/화면 오른쪽 끝)
 
   // 현재 마커 시점의 이 진영 자원 상태 (비용 부족 판정용)
   $: markerState = cur != null ? $sims[side].stateAt(cur) : null;
   $: insufMin = !!(hovered && markerState && hovered.minerals > markerState.minerals);
   $: insufGas = !!(hovered && markerState && hovered.gas > markerState.gas);
 
+  function updateTipPos(e: MouseEvent) {
+    tx = e.clientX;
+    ty = e.clientY;
+    // 우측 진영이거나 커서가 화면 오른쪽 끝 근처면 왼쪽으로 뒤집는다.
+    flip = side === "right" || tx > window.innerWidth - 210;
+  }
   function onEnter(u: UnitDef, e: MouseEvent) {
     hovered = u;
-    tx = e.clientX;
-    ty = e.clientY;
+    updateTipPos(e);
   }
   function onMoveTip(e: MouseEvent) {
-    tx = e.clientX;
-    ty = e.clientY;
+    updateTipPos(e);
   }
   function onLeaveTip() {
     hovered = null;
@@ -178,7 +183,7 @@
 
 <!-- 커서 툴팁: 이름 · 미네랄 · 가스 · 시간 (마커에서 자원 부족 시 빨간색) -->
 {#if hovered}
-  <div class="tip" style="left: {tx + 14}px; top: {ty + 16}px">
+  <div class="tip" style="{flip ? `left: ${tx - 14}px; transform: translateX(-100%)` : `left: ${tx + 14}px`}; top: {ty + 16}px">
     <div class="tip-name">{hovered.name}</div>
     <div class="tip-row">
       <span class="stat" class:short={insufMin}>
