@@ -1,41 +1,57 @@
 <script lang="ts">
-  import { PATCHES, getPatch } from "../patches";
-  import { patch, encodeBuild, importBuild, displaySettings } from "../stores/sim";
+  import {
+    patch,
+    allPatches,
+    findPatch,
+    encodeBuild,
+    importBuild,
+    encodePatch,
+    importPatchCode,
+    displaySettings,
+  } from "../stores/sim";
+  import CustomPatchEditor from "./CustomPatchEditor.svelte";
 
   let selectedId: string;
   $: selectedId = $patch.id;
 
   function onSelect(e: Event) {
-    const id = (e.target as HTMLSelectElement).value;
-    patch.set(getPatch(id));
+    patch.set(findPatch((e.target as HTMLSelectElement).value));
   }
 
   const menu = [
-    { id: "new-patch", label: "커스텀 패치" },
-    { id: "export", label: "내보내기" },
-    { id: "import", label: "가져오기" },
+    { id: "new-patch", label: "커스텀 패치 작성" },
+    { id: "export-patch", label: "패치 내보내기" },
+    { id: "import-patch", label: "패치 가져오기" },
+    { id: "export-build", label: "빌드 내보내기" },
+    { id: "import-build", label: "빌드 가져오기" },
     { id: "display", label: "표시 설정" },
   ];
 
-  let modal: "export" | "import" | "display" | null = null;
+  // 코드 모달(내보내기/가져오기 · 빌드/패치 공용)
+  let codeModal: { mode: "export" | "import"; kind: "build" | "patch" } | null = null;
   let codeText = "";
   let importError = false;
   let copied = false;
+  let displayOpen = false;
+  let showEditor = false;
 
   function onMenu(id: string) {
     copied = false;
     importError = false;
-    if (id === "export") {
+    if (id === "new-patch") showEditor = true;
+    else if (id === "export-build") {
       codeText = encodeBuild();
-      modal = "export";
-    } else if (id === "import") {
+      codeModal = { mode: "export", kind: "build" };
+    } else if (id === "import-build") {
       codeText = "";
-      modal = "import";
-    } else if (id === "display") {
-      modal = "display";
-    } else {
-      console.info(`[menu] ${id} (미구현)`);
-    }
+      codeModal = { mode: "import", kind: "build" };
+    } else if (id === "export-patch") {
+      codeText = encodePatch($patch);
+      codeModal = { mode: "export", kind: "patch" };
+    } else if (id === "import-patch") {
+      codeText = "";
+      codeModal = { mode: "import", kind: "patch" };
+    } else if (id === "display") displayOpen = true;
   }
 
   async function copyCode() {
@@ -48,12 +64,15 @@
   }
 
   function doImport() {
-    if (importBuild(codeText)) {
-      modal = null;
-    } else {
-      importError = true;
-    }
+    if (!codeModal) return;
+    const ok = codeModal.kind === "build" ? importBuild(codeText) : importPatchCode(codeText);
+    if (ok) codeModal = null;
+    else importError = true;
   }
+
+  $: modalTitle = codeModal
+    ? `${codeModal.kind === "build" ? "빌드" : "패치"} ${codeModal.mode === "export" ? "내보내기" : "가져오기"}`
+    : "";
 </script>
 
 <header class="topbar">
@@ -61,7 +80,7 @@
     <label>
       <span>패치</span>
       <select value={selectedId} on:change={onSelect}>
-        {#each PATCHES as p}
+        {#each $allPatches as p}
           <option value={p.id}>{p.name}</option>
         {/each}
       </select>
@@ -75,40 +94,58 @@
   </nav>
 </header>
 
-{#if modal}
+{#if codeModal}
   <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
-  <div class="overlay" on:click={() => (modal = null)}>
+  <div class="overlay" on:click={() => (codeModal = null)}>
     <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
     <div class="dialog" on:click|stopPropagation>
-      <h3>{modal === "export" ? "빌드 내보내기" : modal === "import" ? "빌드 가져오기" : "표시 설정"}</h3>
-      {#if modal === "display"}
-        <div class="settings">
-          <label><input type="checkbox" bind:checked={$displaySettings.showIdle} /> 생산 건물 유휴 하이라이트(빗금)</label>
-          <label><input type="checkbox" bind:checked={$displaySettings.showTech} /> 테크 선행조건 경고 마커</label>
-          <label><input type="checkbox" bind:checked={$displaySettings.showLarva} /> 저그 애벌레 그래프</label>
-        </div>
-        <div class="actions">
-          <button class="primary" on:click={() => (modal = null)}>닫기</button>
-        </div>
-      {:else}
-        <p class="desc">
-          {modal === "export"
-            ? "아래 코드를 복사해 공유하세요. 상대는 가져오기에 붙여넣으면 됩니다."
-            : "공유받은 빌드 코드를 붙여넣고 불러오기를 누르세요."}
-        </p>
-        <textarea bind:value={codeText} readonly={modal === "export"} spellcheck="false" placeholder="여기에 빌드 코드 붙여넣기"></textarea>
-        {#if importError}<p class="err">코드를 해석할 수 없습니다. 다시 확인해주세요.</p>{/if}
-        <div class="actions">
-          {#if modal === "export"}
-            <button class="primary" on:click={copyCode}>{copied ? "복사됨 ✓" : "복사"}</button>
-          {:else}
-            <button class="primary" on:click={doImport}>불러오기</button>
-          {/if}
-          <button on:click={() => (modal = null)}>닫기</button>
-        </div>
-      {/if}
+      <h3>{modalTitle}</h3>
+      <p class="desc">
+        {codeModal.mode === "export"
+          ? "아래 코드를 복사해 공유하세요. 상대는 가져오기에 붙여넣으면 됩니다."
+          : "공유받은 코드를 붙여넣고 불러오기를 누르세요."}
+      </p>
+      <textarea bind:value={codeText} readonly={codeModal.mode === "export"} spellcheck="false" placeholder="여기에 코드 붙여넣기"></textarea>
+      {#if importError}<p class="err">코드를 해석할 수 없습니다.</p>{/if}
+      <div class="actions">
+        {#if codeModal.mode === "export"}
+          <button class="primary" on:click={copyCode}>{copied ? "복사됨 ✓" : "복사"}</button>
+        {:else}
+          <button class="primary" on:click={doImport}>불러오기</button>
+        {/if}
+        <button on:click={() => (codeModal = null)}>닫기</button>
+      </div>
     </div>
   </div>
+{/if}
+
+{#if displayOpen}
+  <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+  <div class="overlay" on:click={() => (displayOpen = false)}>
+    <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+    <div class="dialog" on:click|stopPropagation>
+      <h3>표시 설정</h3>
+      <div class="settings">
+        <label><input type="checkbox" bind:checked={$displaySettings.dark} /> 다크 모드</label>
+        <label class="scale">
+          UI 배율
+          <input type="range" min="70" max="150" step="5" bind:value={$displaySettings.scale} />
+          <span>{$displaySettings.scale}%</span>
+        </label>
+        <hr />
+        <label><input type="checkbox" bind:checked={$displaySettings.showIdle} /> 생산 건물 유휴 하이라이트</label>
+        <label><input type="checkbox" bind:checked={$displaySettings.showTech} /> 테크 선행조건 경고 마커</label>
+        <label><input type="checkbox" bind:checked={$displaySettings.showLarva} /> 저그 애벌레 그래프</label>
+      </div>
+      <div class="actions">
+        <button class="primary" on:click={() => (displayOpen = false)}>닫기</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if showEditor}
+  <CustomPatchEditor base={$patch} on:close={() => (showEditor = false)} />
 {/if}
 
 <style>
@@ -150,6 +187,7 @@
     background: #a7d70b;
     border: 2px solid #6fa300;
     border-radius: 6px;
+    flex-wrap: wrap;
   }
   .menu button {
     font-size: 13px;
@@ -217,6 +255,14 @@
     gap: 8px;
     font-size: 14px;
     cursor: pointer;
+  }
+  .settings label.scale input[type="range"] {
+    flex: 1;
+  }
+  .settings hr {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 2px 0;
   }
   .actions {
     display: flex;

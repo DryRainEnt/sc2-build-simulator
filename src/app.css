@@ -11,3 +11,77 @@ body {
   margin: 0;
   background: #f4f4f5;
 }
+
+/* ── 다크 모드 (.app.dark 하위 전역 오버라이드) ───────────────────────── */
+.app.dark {
+  background: #14141a;
+  color: #e5e7eb;
+}
+.app.dark .sim,
+.app.dark .tabcol {
+  border-color: #3a3a44;
+}
+.app.dark .timearea {
+  background: #1b1b22;
+}
+.app.dark .axis {
+  background: #4b5563;
+}
+.app.dark .tick {
+  border-top-color: #374151;
+}
+.app.dark .tick-label {
+  background: #1b1b22;
+  color: #9ca3af;
+}
+.app.dark .readout {
+  background: #2a2a33dd;
+  color: #e5e7eb;
+}
+.app.dark .readout.hover {
+  background: #1e3a8a;
+  color: #dbeafe;
+}
+.app.dark .prod-icon,
+.app.dark .track-head,
+.app.dark .marker-dot,
+.app.dark .prod-dot,
+.app.dark .chip {
+  background: #2a2a33;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+.app.dark .prod-icon:hover,
+.app.dark .track-head:hover {
+  background: #374151;
+}
+.app.dark .prod-stem {
+  background: #6b7280;
+}
+.app.dark .pause-label {
+  color: #fbbf24;
+}
+.app.dark .dialog {
+  background: #23232b;
+  color: #e5e7eb;
+}
+.app.dark .dialog textarea,
+.app.dark .dialog input,
+.app.dark .dialog select {
+  background: #1b1b22;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+.app.dark .desc {
+  color: #9ca3af;
+}
+.app.dark .actions button {
+  background: #2a2a33;
+  color: #e5e7eb;
+  border-color: #4b5563;
+}
+.app.dark .actions .primary,
+.app.dark .dialog .primary {
+  background: #2563eb;
+  color: #fff;
+}

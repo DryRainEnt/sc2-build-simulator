@@ -7,7 +7,26 @@ import type {
   SimulationResult,
 } from "../engine/types";
 import { simulate } from "../engine/simulate";
-import { DEFAULT_PATCH, getPatchById } from "../data/registry";
+import { DEFAULT_PATCH, REGISTRY, getPatchById } from "../data/registry";
+
+// localStorage 영속화 헬퍼 (없는 환경/오류는 안전 무시)
+function loadLS<T>(key: string, fallback: T): T {
+  try {
+    const s = localStorage.getItem(key);
+    return s ? (JSON.parse(s) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function persist<T>(store: { subscribe: (fn: (v: T) => void) => unknown }, key: string): void {
+  store.subscribe((v) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(v));
+    } catch {
+      /* ignore */
+    }
+  });
+}
 
 export type TabId = "unit" | "building" | "upgrade" | "action";
 export type Side = "left" | "right";
@@ -50,12 +69,42 @@ export const currentMarker = writable<number | null>(null);
 /** 시간선 커서가 가리키는 시각(초). null = 벗어남. */
 export const hoverTime = writable<number | null>(null);
 
-/** 표시 설정 (편의 토글). */
+/** 표시 설정 (편의 토글). localStorage 영속. */
 export const displaySettings = writable({
   showIdle: true, // 생산 건물 유휴 빗금
   showTech: true, // 테크 선행 경고 마커
   showLarva: true, // 저그 애벌레 그래프
+  dark: false, // 다크 모드
+  scale: 100, // UI 배율(%)
+  ...loadLS<Record<string, unknown>>("scbs-display", {}),
 });
+persist(displaySettings, "scbs-display");
+
+/** 사용자 커스텀 패치들 (localStorage 영속). */
+export const customPatches = writable<PatchData[]>(loadLS<PatchData[]>("scbs-custom-patches", []));
+persist(customPatches, "scbs-custom-patches");
+
+/** 드롭다운에 보일 전체 패치 = 내장 + 커스텀. */
+export const allPatches = derived(customPatches, ($c) => [...REGISTRY, ...$c]);
+
+/** id로 패치 조회 (내장 + 커스텀). */
+export function findPatch(id: string): PatchData {
+  return get(customPatches).find((p) => p.id === id) ?? getPatchById(id);
+}
+
+/** 커스텀 패치 추가/교체 후 현재 패치로 선택. */
+export function saveCustomPatch(p: PatchData): void {
+  customPatches.update((list) => {
+    const rest = list.filter((x) => x.id !== p.id);
+    return [...rest, p];
+  });
+  patch.set(p);
+}
+
+/** 커스텀 패치 삭제. */
+export function deleteCustomPatch(id: string): void {
+  customPatches.update((list) => list.filter((p) => p.id !== id));
+}
 
 // ── 파생: 각 진영 시뮬레이션 결과 ────────────────────────────────────────
 export const sims = derived(
@@ -243,7 +292,12 @@ export function importBuild(code: string): boolean {
   try {
     const data = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
     if (data.v !== 1 || !data.L || !data.R) return false;
-    patch.set(getPatchById(data.patch));
+    // 패치를 못 찾으면(커스텀 미보유 등) 현재 패치 유지
+    try {
+      patch.set(findPatch(data.patch));
+    } catch {
+      /* keep current */
+    }
     factions.set({
       left: { race: data.L.r, events: Array.isArray(data.L.e) ? data.L.e : [], activeTab: "unit" },
       right: { race: data.R.r, events: Array.isArray(data.R.e) ? data.R.e : [], activeTab: "unit" },
@@ -251,6 +305,22 @@ export function importBuild(code: string): boolean {
     markers.set(Array.isArray(data.m) ? data.m : []);
     currentMarker.set(null);
     selectedTrack.set(null);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ── 패치 공유 코드 (커스텀 패치 내보내기/가져오기) ────────────────────────
+export function encodePatch(p: PatchData): string {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(p))));
+}
+
+export function importPatchCode(code: string): boolean {
+  try {
+    const p = JSON.parse(decodeURIComponent(escape(atob(code.trim())))) as PatchData;
+    if (!p || !p.id || !p.units || !p.harvest) return false;
+    saveCustomPatch(p);
     return true;
   } catch {
     return false;

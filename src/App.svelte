@@ -2,9 +2,10 @@
   import TopBar from "./lib/components/TopBar.svelte";
   import TabPanel from "./lib/components/TabPanel.svelte";
   import TimeArea from "./lib/components/TimeArea.svelte";
+  import { displaySettings } from "./lib/stores/sim";
 </script>
 
-<div class="app">
+<div class="app" class:dark={$displaySettings.dark} style="zoom: {($displaySettings.scale ?? 100) / 100}">
   <TopBar />
 
   <div class="sim">
