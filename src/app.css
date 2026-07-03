@@ -12,76 +12,183 @@ body {
   background: #f4f4f5;
 }
 
-/* ── 다크 모드 (.app.dark 하위 전역 오버라이드) ───────────────────────── */
+/* ── 다크 모드 ──────────────────────────────────────────────────────────
+   Svelte 스코프 스타일은 해시를 두 번 붙여 특정도 (0,3,0)이 된다.
+   그래서 하위 요소 오버라이드는 `.app.dark.dark` 접두(=클래스 3개)로 특정도를
+   (0,4,0)+ 로 올려 스코프 스타일을 확실히 이기게 한다. */
 .app.dark {
   background: #14141a;
   color: #e5e7eb;
+  color-scheme: dark;
 }
-.app.dark .sim,
-.app.dark .tabcol {
+
+/* 구조/경계 */
+.app.dark.dark .sim,
+.app.dark.dark .tabcol {
+  border-color: #34343f;
+}
+
+/* 상단바 */
+.app.dark.dark .patch-select {
+  background: #182430;
+  border-color: #274156;
+}
+.app.dark.dark .patch-select label {
+  color: #cde7f5;
+}
+.app.dark.dark .menu {
+  background: #1d2411;
+  border-color: #3c4a1e;
+}
+.app.dark.dark .menu button {
+  background: #262631;
+  border-color: #3a3a44;
+  color: #dbe4c8;
+}
+.app.dark.dark .menu button:hover {
+  background: #33333f;
+}
+.app.dark.dark select {
+  background: #1b1b22;
+  color: #e5e7eb;
   border-color: #3a3a44;
 }
-.app.dark .timearea {
-  background: #1b1b22;
+
+/* 진영 패널 (색 정체성 유지하되 어둡게) */
+.app.dark.dark .panel.left {
+  background: #221d38;
 }
-.app.dark .axis {
-  background: #4b5563;
+.app.dark.dark .panel.right {
+  background: #2f2708;
 }
-.app.dark .tick {
-  border-top-color: #374151;
+.app.dark.dark .tabs button {
+  background: #262631;
+  border-color: #3a3a44;
+  color: #dbe4e8;
 }
-.app.dark .tick-label {
-  background: #1b1b22;
+.app.dark.dark .tabs button.active {
+  background: #3a3a48;
+  box-shadow: 0 0 0 2px #ffffff33 inset;
+}
+.app.dark.dark .iconcell,
+.app.dark.dark .cell {
+  background: #262631;
+  border-color: #3a3a44;
+}
+.app.dark.dark .iconcell:hover,
+.app.dark.dark .cell:hover {
+  background: #374151;
+  border-color: #64748b;
+}
+.app.dark.dark .hint,
+.app.dark.dark .empty {
   color: #9ca3af;
 }
-.app.dark .readout {
-  background: #2a2a33dd;
+.app.dark.dark .hint.sel {
+  color: #93c5fd;
+}
+
+/* 타임라인 */
+.app.dark.dark .timearea {
+  background: #17171d;
+}
+.app.dark.dark .axis {
+  background: #4b5563;
+}
+.app.dark.dark .tick {
+  border-top-color: #313742;
+}
+.app.dark.dark .tick-label {
+  background: #17171d;
+  color: #9ca3af;
+}
+.app.dark.dark .readout {
+  background: #262633ee;
   color: #e5e7eb;
 }
-.app.dark .readout.hover {
+.app.dark.dark .readout.hover {
   background: #1e3a8a;
   color: #dbeafe;
 }
-.app.dark .prod-icon,
-.app.dark .track-head,
-.app.dark .marker-dot,
-.app.dark .prod-dot,
-.app.dark .chip {
-  background: #2a2a33;
+.app.dark.dark .marker-dot,
+.app.dark.dark .prod-icon,
+.app.dark.dark .track-head {
+  background: #262631;
   border-color: #4b5563;
   color: #e5e7eb;
 }
-.app.dark .prod-icon:hover,
-.app.dark .track-head:hover {
+.app.dark.dark .prod-icon:hover,
+.app.dark.dark .track-head:hover {
   background: #374151;
 }
-.app.dark .prod-stem {
+.app.dark.dark .prod-stem {
   background: #6b7280;
 }
-.app.dark .pause-label {
-  color: #fbbf24;
-}
-.app.dark .dialog {
-  background: #23232b;
+
+/* 다이얼로그 (표시설정/코드) */
+.app.dark.dark .dialog {
+  background: #22222b;
   color: #e5e7eb;
 }
-.app.dark .dialog textarea,
-.app.dark .dialog input,
-.app.dark .dialog select {
-  background: #1b1b22;
+.app.dark.dark .dialog h3 {
+  color: #f3f4f6;
+}
+.app.dark.dark .dialog .desc,
+.app.dark.dark .dialog .settings label {
+  color: #cbd5e1;
+}
+.app.dark.dark .dialog textarea,
+.app.dark.dark .dialog input,
+.app.dark.dark .dialog select {
+  background: #16161c;
   color: #e5e7eb;
-  border-color: #4b5563;
+  border-color: #3a3a44;
 }
-.app.dark .desc {
-  color: #9ca3af;
+.app.dark.dark .settings hr {
+  border-top-color: #3a3a44;
 }
-.app.dark .actions button {
+.app.dark.dark .actions button {
   background: #2a2a33;
   color: #e5e7eb;
-  border-color: #4b5563;
+  border-color: #3a3a44;
 }
-.app.dark .actions .primary,
-.app.dark .dialog .primary {
+.app.dark.dark .actions .primary,
+.app.dark.dark .dialog .primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+/* 커스텀 패치 편집기 */
+.app.dark.dark .editor {
+  background: #1c1c23;
+  color: #e5e7eb;
+}
+.app.dark.dark .editor header {
+  border-bottom-color: #34343f;
+}
+.app.dark.dark .editor fieldset {
+  border-color: #34343f;
+}
+.app.dark.dark .editor input {
+  background: #16161c;
+  color: #e5e7eb;
+  border-color: #3a3a44;
+}
+.app.dark.dark .editor thead th {
+  background: #262631;
+  color: #e5e7eb;
+}
+.app.dark.dark .editor th,
+.app.dark.dark .editor td {
+  border-color: #2b2b34;
+}
+.app.dark.dark .editor header button {
+  background: #2a2a33;
+  color: #e5e7eb;
+  border-color: #3a3a44;
+}
+.app.dark.dark .editor header .primary {
   background: #2563eb;
   color: #fff;
 }
