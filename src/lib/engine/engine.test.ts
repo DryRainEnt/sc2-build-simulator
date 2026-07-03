@@ -245,6 +245,28 @@ describe("시뮬레이션 — 보급 공급", () => {
     expect(r.stateAt(12).workers).toBe(13);
   });
 
+  it("저그 건물 건설 시 드론 1 소모 + 보급 반환 (변태건물은 소모 없음)", () => {
+    // 스포닝풀(드론 변태) → 시작 12드론 중 1 소모, 보급도 1 반환
+    const pool = simulate([{ time: 0, kind: "build_structure", unitId: "spawning_pool" }], LOTV_PATCH, {
+      duration: 60,
+      race: "zerg",
+    });
+    expect(pool.stateAt(1).workers).toBe(11);
+    expect(pool.stateAt(1).supplyUsed).toBe(11);
+    // 둥지(hatchery 변태)는 드론 소모 없음
+    const lair = simulate([{ time: 0, kind: "build_structure", unitId: "lair" }], LOTV_PATCH, {
+      duration: 60,
+      race: "zerg",
+    });
+    expect(lair.stateAt(1).workers).toBe(12);
+    // 테란 건물은 일꾼 소모 없음
+    const rax = simulate([{ time: 0, kind: "build_structure", unitId: "barracks" }], LOTV_PATCH, {
+      duration: 60,
+      race: "terran",
+    });
+    expect(rax.stateAt(1).workers).toBe(12);
+  });
+
   it("서플라이 디폿 완성 시 보급 최대치 증가", () => {
     const events: BuildEvent[] = [
       { time: 0, kind: "build_structure", unitId: "supply_depot" },

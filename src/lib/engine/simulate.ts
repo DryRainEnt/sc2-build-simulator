@@ -81,11 +81,21 @@ function buildOps(
       case "train_worker":
         emitProduction(i, e.time, findWorker(patch, race));
         break;
-      case "train_unit":
+      case "train_unit": {
+        const def = patch.units[e.unitId];
+        if (!def) throw new Error(`알 수 없는 유닛 id: ${e.unitId}`);
+        emitProduction(i, e.time, def);
+        break;
+      }
       case "build_structure": {
         const def = patch.units[e.unitId];
         if (!def) throw new Error(`알 수 없는 유닛 id: ${e.unitId}`);
         emitProduction(i, e.time, def);
+        // 저그만: 드론이 건물로 변태 → 주문 시점에 일꾼 1 소모(+보급 1 반환).
+        // 건물 변태(둥지/군락 등, producedFrom=건물)는 드론 소모 없음.
+        if (race === "zerg" && def.producedFrom?.includes(findWorker(patch, race).id)) {
+          push({ t: e.time, type: "death", isWorker: true, supply: 1, count: 1 });
+        }
         break;
       }
       case "worker_transfer": {
