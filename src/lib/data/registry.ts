@@ -127,6 +127,7 @@ export function toPatchData(full: PatchFull): PatchData {
       startCount: u.startCount,
       hidden: u.hidden,
       addon: u.addon,
+      acceptsAddon: u.acceptsAddon,
       isWorker: u.category === "worker",
     };
   }

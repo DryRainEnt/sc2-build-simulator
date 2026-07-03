@@ -66,6 +66,10 @@
   $: insufMin = !!(hovered && markerState && hovered.minerals > markerState.minerals);
   $: insufGas = !!(hovered && markerState && hovered.gas > markerState.gas);
 
+  // 애드온 부착 가능한 건물 열이 선택됐는지 (병영/군수공장/우주공항만)
+  $: selType = $selectedTrack?.side === side ? $selectedTrack.machineId.split("#")[0] : null;
+  $: selAcceptsAddon = !!(selType && $patch.units[selType]?.acceptsAddon);
+
   function updateTipPos(e: MouseEvent) {
     tx = e.clientX;
     ty = e.clientY;
@@ -93,6 +97,8 @@
       // 애드온: 선택된(같은 진영) 건물 열에 부착. 같은 애드온 다시 클릭 = 제거.
       const sel = $selectedTrack;
       if (!sel || sel.side !== side) return;
+      // 병영/군수공장/우주공항에만 부착 가능
+      if (!$patch.units[sel.machineId.split("#")[0]]?.acceptsAddon) return;
       const existing = faction.events.find(
         (e): e is Extract<typeof e, { kind: "addon" }> => e.kind === "addon" && e.machineId === sel.machineId,
       );
@@ -155,7 +161,7 @@
         <button
           class="iconcell"
           class:addon={u.addon}
-          class:armed={u.addon && $selectedTrack?.side === side}
+          class:armed={u.addon && selAcceptsAddon}
           on:click={() => clickUnit(u)}
           on:mouseenter={(e) => onEnter(u, e)}
           on:mousemove={onMoveTip}
@@ -177,7 +183,10 @@
     <p class="hint">현재 마커: {cur}s</p>
   {/if}
   {#if $selectedTrack?.side === side}
-    <p class="hint sel">선택: {$patch.units[$selectedTrack.machineId.split("#")[0]]?.name ?? $selectedTrack.machineId} — 기술실/반응로 클릭해 부착</p>
+    <p class="hint sel">
+      선택: {$patch.units[selType ?? ""]?.name ?? $selectedTrack.machineId}
+      {#if selAcceptsAddon}— 기술실/반응로 클릭해 부착{:else}— 애드온 부착 불가(병영/군수공장/우주공항만){/if}
+    </p>
   {/if}
 </div>
 

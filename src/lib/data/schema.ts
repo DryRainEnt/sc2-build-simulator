@@ -69,6 +69,8 @@ export const zUnit = z
     hidden: z.boolean().optional(),
     /** 애드온(반응로/기술실) — 선택된 건물 열에 부착. */
     addon: z.boolean().optional(),
+    /** 애드온 부착 가능 건물 (병영/군수공장/우주공항). */
+    acceptsAddon: z.boolean().optional(),
     /** 이 항목 수치의 출처/비고 (검증 추적용). */
     note: z.string().optional(),
   })

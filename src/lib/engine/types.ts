@@ -44,6 +44,8 @@ export interface UnitDef {
   hidden?: boolean;
   /** 애드온(반응로/기술실) — 클릭 시 선택된 건물 열에 부착. */
   addon?: boolean;
+  /** 애드온을 부착할 수 있는 건물 (테란 병영/군수공장/우주공항). */
+  acceptsAddon?: boolean;
   /** 일꾼 여부 — 완성 시 채취 인구에 합류. category==="worker"에서 파생. */
   isWorker?: boolean;
 }
