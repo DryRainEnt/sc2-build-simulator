@@ -2,6 +2,7 @@
   import { createEventDispatcher } from "svelte";
   import { saveCustomPatch } from "../stores/sim";
   import type { PatchData, UnitDef } from "../engine/types";
+  import { t } from "../i18n";
 
   export let base: PatchData;
   const dispatch = createEventDispatcher();
@@ -41,42 +42,42 @@
   <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
   <div class="editor" on:click|stopPropagation>
     <header>
-      <h3>커스텀 패치 작성</h3>
-      <label class="pname">이름 <input bind:value={name} /></label>
+      <h3>{$t("커스텀 패치 작성")}</h3>
+      <label class="pname">{$t("이름")} <input bind:value={name} /></label>
       <div class="spacer"></div>
-      <button class="primary" on:click={save}>저장 & 적용</button>
-      <button on:click={() => dispatch("close")}>취소</button>
+      <button class="primary" on:click={save}>{$t("저장 & 적용")}</button>
+      <button on:click={() => dispatch("close")}>{$t("취소")}</button>
     </header>
 
     <div class="body">
       <section class="globals">
         <fieldset>
-          <legend>채취/자원</legend>
-          <label>패치당 일꾼 채취/초 <input type="number" step="0.001" bind:value={draft.harvest.mineralPerWorker} /></label>
-          <label>포화 3번째/초 <input type="number" step="0.001" bind:value={draft.harvest.mineralPerWorkerSaturated} /></label>
-          <label>가스 일꾼/초(1·2번째) <input type="number" step="0.001" bind:value={draft.harvest.gasPerWorker} /></label>
-          <label>가스 포화/초(3번째) <input type="number" step="0.001" bind:value={draft.harvest.gasPerWorkerSaturated} /></label>
-          <label>미네랄 왕복량 <input type="number" bind:value={draft.harvest.mineralsPerTrip} /></label>
-          <label>가스 왕복량 <input type="number" bind:value={draft.harvest.gasPerTrip} /></label>
-          <label>패치당 정상 일꾼 <input type="number" bind:value={draft.harvest.workersPerMineralPatch} /></label>
-          <label>패치당 최대 일꾼 <input type="number" bind:value={draft.harvest.maxWorkersPerMineralPatch} /></label>
-          <label>간헐천 정상 일꾼 <input type="number" bind:value={draft.harvest.workersPerGeyser} /></label>
-          <label>간헐천 최대 일꾼 <input type="number" bind:value={draft.harvest.maxWorkersPerGeyser} /></label>
+          <legend>{$t("채취/자원")}</legend>
+          <label>{$t("패치당 일꾼 채취/초")} <input type="number" step="0.001" bind:value={draft.harvest.mineralPerWorker} /></label>
+          <label>{$t("포화 3번째/초")} <input type="number" step="0.001" bind:value={draft.harvest.mineralPerWorkerSaturated} /></label>
+          <label>{$t("가스 일꾼/초(1·2번째)")} <input type="number" step="0.001" bind:value={draft.harvest.gasPerWorker} /></label>
+          <label>{$t("가스 포화/초(3번째)")} <input type="number" step="0.001" bind:value={draft.harvest.gasPerWorkerSaturated} /></label>
+          <label>{$t("미네랄 왕복량")} <input type="number" bind:value={draft.harvest.mineralsPerTrip} /></label>
+          <label>{$t("가스 왕복량")} <input type="number" bind:value={draft.harvest.gasPerTrip} /></label>
+          <label>{$t("패치당 정상 일꾼")} <input type="number" bind:value={draft.harvest.workersPerMineralPatch} /></label>
+          <label>{$t("패치당 최대 일꾼")} <input type="number" bind:value={draft.harvest.maxWorkersPerMineralPatch} /></label>
+          <label>{$t("간헐천 정상 일꾼")} <input type="number" bind:value={draft.harvest.workersPerGeyser} /></label>
+          <label>{$t("간헐천 최대 일꾼")} <input type="number" bind:value={draft.harvest.maxWorkersPerGeyser} /></label>
         </fieldset>
         <fieldset>
-          <legend>시작/기지</legend>
-          <label>시작 미네랄 <input type="number" bind:value={draft.start.minerals} /></label>
-          <label>시작 가스 <input type="number" bind:value={draft.start.gas} /></label>
-          <label>시작 일꾼 <input type="number" bind:value={draft.start.workers} /></label>
-          <label>미네랄 패치 수 <input type="number" bind:value={draft.base.mineralPatches} /></label>
-          <label>간헐천 수 <input type="number" bind:value={draft.base.geysers} /></label>
+          <legend>{$t("시작/기지")}</legend>
+          <label>{$t("시작 미네랄")} <input type="number" bind:value={draft.start.minerals} /></label>
+          <label>{$t("시작 가스")} <input type="number" bind:value={draft.start.gas} /></label>
+          <label>{$t("시작 일꾼")} <input type="number" bind:value={draft.start.workers} /></label>
+          <label>{$t("미네랄 패치 수")} <input type="number" bind:value={draft.base.mineralPatches} /></label>
+          <label>{$t("간헐천 수")} <input type="number" bind:value={draft.base.geysers} /></label>
         </fieldset>
         <fieldset>
-          <legend>애벌레/워프</legend>
-          <label>애벌레 생성(초) <input type="number" step="0.1" bind:value={larva.spawnSeconds} /></label>
-          <label>기지당 애벌레 <input type="number" bind:value={larva.perBase} /></label>
-          <label>인젝트 애벌레 <input type="number" bind:value={larva.injectAmount} /></label>
-          <label>워프인(초) <input type="number" bind:value={draft.warpInSeconds} /></label>
+          <legend>{$t("애벌레/워프")}</legend>
+          <label>{$t("애벌레 생성(초)")} <input type="number" step="0.1" bind:value={larva.spawnSeconds} /></label>
+          <label>{$t("기지당 애벌레")} <input type="number" bind:value={larva.perBase} /></label>
+          <label>{$t("인젝트 애벌레")} <input type="number" bind:value={larva.injectAmount} /></label>
+          <label>{$t("워프인(초)")} <input type="number" bind:value={draft.warpInSeconds} /></label>
         </fieldset>
       </section>
 
@@ -84,8 +85,8 @@
         <table>
           <thead>
             <tr>
-              <th class="nm">유닛</th><th>종족</th><th>미네랄</th><th>가스</th><th>보급</th>
-              <th>보급공급</th><th>생산시간</th><th>시작수</th><th>애벌레</th><th>워프쿨</th>
+              <th class="nm">{$t("유닛")}</th><th>{$t("종족")}</th><th>{$t("미네랄")}</th><th>{$t("가스")}</th><th>{$t("보급")}</th>
+              <th>{$t("보급공급")}</th><th>{$t("생산시간")}</th><th>{$t("시작수")}</th><th>{$t("애벌레")}</th><th>{$t("워프쿨")}</th>
             </tr>
           </thead>
           <tbody>

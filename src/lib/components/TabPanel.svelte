@@ -17,6 +17,7 @@
     selectedTrack,
   } from "../stores/sim";
   import { RACES, unitsFor, producibleUnits, categoryOf } from "../patches";
+  import { t } from "../i18n";
   import { unitIconUrl, resourceIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
   import type { Race, UnitDef } from "../engine/types";
@@ -138,15 +139,15 @@
   <div class="race">
     <select value={faction.race} on:change={onRaceChange}>
       {#each RACES as r}
-        <option value={r.id}>{r.label}</option>
+        <option value={r.id}>{$t(r.label)}</option>
       {/each}
     </select>
   </div>
 
   <div class="tabs">
-    {#each tabs as t}
-      <button class:active={faction.activeTab === t.id} on:click={() => setTab(side, t.id)}>
-        {t.label}
+    {#each tabs as tab}
+      <button class:active={faction.activeTab === tab.id} on:click={() => setTab(side, tab.id)}>
+        {$t(tab.label)}
       </button>
     {/each}
   </div>
@@ -154,7 +155,7 @@
   <div class="grid" class:icongrid={faction.activeTab !== "action"} class:dim={cur == null}>
     {#if faction.activeTab === "action"}
       {#each actions as a}
-        <button class="cell" on:click={() => clickAction(a.id)} title={a.label}>{a.label}</button>
+        <button class="cell" on:click={() => clickAction(a.id)} title={$t(a.label)}>{$t(a.label)}</button>
       {/each}
     {:else}
       {#each prodList as u}
@@ -166,26 +167,26 @@
           on:mouseenter={(e) => onEnter(u, e)}
           on:mousemove={onMoveTip}
           on:mouseleave={onLeaveTip}
-          title={u.addon ? `${u.name} — 건물 열 선택 후 클릭해 부착` : u.name}
+          title={u.addon ? `${u.name} — ${$t("건물 열 선택 후 클릭해 부착")}` : u.name}
         >
           <Icon src={unitIconUrl(u.id)} label={u.name} size={54} />
         </button>
       {/each}
       {#if prodList.length === 0}
-        <p class="empty">데이터 없음</p>
+        <p class="empty">{$t("데이터 없음")}</p>
       {/if}
     {/if}
   </div>
 
   {#if cur == null}
-    <p class="hint">시간선을 클릭해 마커를 먼저 배치하세요</p>
+    <p class="hint">{$t("시간선을 클릭해 마커를 먼저 배치하세요")}</p>
   {:else}
-    <p class="hint">현재 마커: {cur}s</p>
+    <p class="hint">{$t("현재 마커")}: {cur}s</p>
   {/if}
   {#if $selectedTrack?.side === side}
     <p class="hint sel">
-      선택: {$patch.units[selType ?? ""]?.name ?? $selectedTrack.machineId}
-      {#if selAcceptsAddon}— 기술실/반응로 클릭해 부착{:else}— 애드온 부착 불가(병영/군수공장/우주공항만){/if}
+      {$t("선택")}: {$patch.units[selType ?? ""]?.name ?? $selectedTrack.machineId}
+      {#if selAcceptsAddon}{$t("— 기술실/반응로 클릭해 부착")}{:else}{$t("— 애드온 부착 불가(병영/군수공장/우주공항만)")}{/if}
     </p>
   {/if}
 </div>

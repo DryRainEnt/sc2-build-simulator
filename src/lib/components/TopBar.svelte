@@ -10,6 +10,7 @@
     displaySettings,
   } from "../stores/sim";
   import CustomPatchEditor from "./CustomPatchEditor.svelte";
+  import { t, lang } from "../i18n";
 
   let selectedId: string;
   $: selectedId = $patch.id;
@@ -71,14 +72,14 @@
   }
 
   $: modalTitle = codeModal
-    ? `${codeModal.kind === "build" ? "빌드" : "패치"} ${codeModal.mode === "export" ? "내보내기" : "가져오기"}`
+    ? `${$t(codeModal.kind === "build" ? "빌드" : "패치")} ${$t(codeModal.mode === "export" ? "내보내기" : "가져오기")}`
     : "";
 </script>
 
 <header class="topbar">
   <div class="patch-select">
     <label>
-      <span>패치</span>
+      <span>{$t("패치")}</span>
       <select value={selectedId} on:change={onSelect}>
         {#each $allPatches as p}
           <option value={p.id}>{p.name}</option>
@@ -89,7 +90,7 @@
 
   <nav class="menu">
     {#each menu as m}
-      <button type="button" on:click={() => onMenu(m.id)}>{m.label}</button>
+      <button type="button" on:click={() => onMenu(m.id)}>{$t(m.label)}</button>
     {/each}
   </nav>
 </header>
@@ -102,18 +103,18 @@
       <h3>{modalTitle}</h3>
       <p class="desc">
         {codeModal.mode === "export"
-          ? "아래 코드를 복사해 공유하세요. 상대는 가져오기에 붙여넣으면 됩니다."
-          : "공유받은 코드를 붙여넣고 불러오기를 누르세요."}
+          ? $t("아래 코드를 복사해 공유하세요. 상대는 가져오기에 붙여넣으면 됩니다.")
+          : $t("공유받은 코드를 붙여넣고 불러오기를 누르세요.")}
       </p>
-      <textarea bind:value={codeText} readonly={codeModal.mode === "export"} spellcheck="false" placeholder="여기에 코드 붙여넣기"></textarea>
-      {#if importError}<p class="err">코드를 해석할 수 없습니다.</p>{/if}
+      <textarea bind:value={codeText} readonly={codeModal.mode === "export"} spellcheck="false" placeholder={$t("여기에 코드 붙여넣기")}></textarea>
+      {#if importError}<p class="err">{$t("코드를 해석할 수 없습니다.")}</p>{/if}
       <div class="actions">
         {#if codeModal.mode === "export"}
-          <button class="primary" on:click={copyCode}>{copied ? "복사됨 ✓" : "복사"}</button>
+          <button class="primary" on:click={copyCode}>{copied ? $t("복사됨 ✓") : $t("복사")}</button>
         {:else}
-          <button class="primary" on:click={doImport}>불러오기</button>
+          <button class="primary" on:click={doImport}>{$t("불러오기")}</button>
         {/if}
-        <button on:click={() => (codeModal = null)}>닫기</button>
+        <button on:click={() => (codeModal = null)}>{$t("닫기")}</button>
       </div>
     </div>
   </div>
@@ -124,21 +125,28 @@
   <div class="overlay" on:click={() => (displayOpen = false)}>
     <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
     <div class="dialog" on:click|stopPropagation>
-      <h3>표시 설정</h3>
+      <h3>{$t("표시 설정")}</h3>
       <div class="settings">
-        <label><input type="checkbox" bind:checked={$displaySettings.dark} /> 다크 모드</label>
         <label class="scale">
-          UI 배율
+          {$t("언어")}
+          <select bind:value={$lang}>
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <label><input type="checkbox" bind:checked={$displaySettings.dark} /> {$t("다크 모드")}</label>
+        <label class="scale">
+          {$t("UI 배율")}
           <input type="range" min="70" max="150" step="5" bind:value={$displaySettings.scale} />
           <span>{$displaySettings.scale}%</span>
         </label>
         <hr />
-        <label><input type="checkbox" bind:checked={$displaySettings.showIdle} /> 생산 건물 유휴 하이라이트</label>
-        <label><input type="checkbox" bind:checked={$displaySettings.showTech} /> 테크 선행조건 경고 마커</label>
-        <label><input type="checkbox" bind:checked={$displaySettings.showLarva} /> 저그 애벌레 그래프</label>
+        <label><input type="checkbox" bind:checked={$displaySettings.showIdle} /> {$t("생산 건물 유휴 하이라이트")}</label>
+        <label><input type="checkbox" bind:checked={$displaySettings.showTech} /> {$t("테크 선행조건 경고 마커")}</label>
+        <label><input type="checkbox" bind:checked={$displaySettings.showLarva} /> {$t("저그 애벌레 그래프")}</label>
       </div>
       <div class="actions">
-        <button class="primary" on:click={() => (displayOpen = false)}>닫기</button>
+        <button class="primary" on:click={() => (displayOpen = false)}>{$t("닫기")}</button>
       </div>
     </div>
   </div>

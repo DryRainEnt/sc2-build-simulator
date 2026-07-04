@@ -16,36 +16,43 @@ export interface BuildChipGroup {
   items: BuildChipItem[];
 }
 
-function describe(e: BuildEvent, patch: PatchData): { key: string; label: string; unitId?: string } {
+/** 번역기(없으면 원문 유지). 언어 전환 시 칩 라벨을 해당 언어로 만든다. */
+type Tr = (s: string) => string;
+const idTr: Tr = (s) => s;
+
+function describe(
+  e: BuildEvent,
+  patch: PatchData,
+  tr: Tr = idTr,
+): { key: string; label: string; unitId?: string } {
   switch (e.kind) {
     case "train_worker":
-      return { key: "worker", label: "일꾼" };
+      return { key: "worker", label: tr("일꾼") };
     case "train_unit":
     case "build_structure": {
       const name = patch.units[e.unitId]?.name ?? e.unitId;
       return { key: `u:${e.unitId}`, label: name, unitId: e.unitId };
     }
-    case "assign_worker":
+    case "assign_worker": {
+      const base = `${tr(e.to === "gas" ? "가스" : "미네랄")} ${tr("일꾼")}`;
       return {
         key: `assign:${e.to}:${e.workers}`,
-        label:
-          e.workers === 1
-            ? `${e.to === "gas" ? "가스" : "미네랄"} 일꾼`
-            : `${e.to === "gas" ? "가스" : "미네랄"} 일꾼 ${e.workers}`,
+        label: e.workers === 1 ? base : `${base} ${e.workers}`,
       };
+    }
     case "worker_transfer":
       return {
         key: `pause:${e.workers}:${e.duration}`,
-        label: `채취정지 ${e.workers}기/${e.duration}s`,
+        label: `${tr("채취정지")} ${e.workers}${tr("기")}/${e.duration}s`,
       };
     case "unit_death": {
-      const name = patch.units[e.unitId]?.name ?? (e.unitId === "worker" ? "일꾼" : e.unitId);
-      return { key: `death:${e.unitId}`, label: `${name} 사망`, unitId: e.unitId };
+      const name = patch.units[e.unitId]?.name ?? (e.unitId === "worker" ? tr("일꾼") : e.unitId);
+      return { key: `death:${e.unitId}`, label: `${name} ${tr("사망")}`, unitId: e.unitId };
     }
     case "inject":
-      return { key: "inject", label: "인젝트" };
+      return { key: "inject", label: tr("인젝트") };
     case "addon":
-      return { key: `addon:${e.machineId}`, label: "반응로" };
+      return { key: `addon:${e.machineId}`, label: tr("반응로") };
   }
 }
 
@@ -273,10 +280,10 @@ export function contiguousBlock(bars: TimelineBar[], bar: TimelineBar): number[]
   return block;
 }
 
-export function summarizeBuild(events: BuildEvent[], patch: PatchData): BuildChipGroup[] {
+export function summarizeBuild(events: BuildEvent[], patch: PatchData, tr: Tr = idTr): BuildChipGroup[] {
   const byTime = new Map<number, Map<string, BuildChipItem>>();
   for (const e of events) {
-    const { key, label, unitId } = describe(e, patch);
+    const { key, label, unitId } = describe(e, patch, tr);
     let m = byTime.get(e.time);
     if (!m) {
       m = new Map();
