@@ -194,7 +194,7 @@
 <!-- 커서 툴팁: 이름 · 미네랄 · 가스 · 시간 (마커에서 자원 부족 시 빨간색) -->
 {#if hovered}
   <div class="tip" style="{flip ? `left: ${tx - 14}px; transform: translateX(-100%)` : `left: ${tx + 14}px`}; top: {ty + 16}px">
-    <div class="tip-name">{hovered.name}</div>
+    <div class="tip-name">{$un(hovered.id, hovered.name)}</div>
     <div class="tip-row">
       <span class="stat" class:short={insufMin}>
         <Icon src={icMin} label="M" size={13} />{hovered.minerals}
