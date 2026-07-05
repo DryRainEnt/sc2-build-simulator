@@ -150,8 +150,8 @@ const KO_NAME: Record<string, string> = {
   ghost_academy: "유령 사관학교", armory: "무기고", starport: "우주공항", fusion_core: "융합로",
   tech_lab: "기술실", reactor: "반응로",
   // 테란 유닛
-  scv: "SCV", mule: "뮬", marine: "해병", marauder: "불곰", reaper: "사신", ghost: "유령",
-  hellion: "화염차", hellbat: "화염기갑병", widow_mine: "지뢰", siege_tank: "공성 전차",
+  scv: "건설로봇", mule: "지게로봇", marine: "해병", marauder: "불곰", reaper: "사신", ghost: "유령",
+  hellion: "화염차", hellbat: "화염기갑병", widow_mine: "땅거미 지뢰", siege_tank: "공성 전차",
   cyclone: "사이클론", thor: "토르", viking: "바이킹", medivac: "의료선", liberator: "해방선",
   banshee: "밴시", raven: "밤까마귀", battlecruiser: "전투순양함",
   // 프로토스 건물
@@ -167,15 +167,15 @@ const KO_NAME: Record<string, string> = {
   phoenix: "불사조", void_ray: "공허 포격기", oracle: "예언자", tempest: "폭풍함",
   carrier: "우주모함", interceptor: "요격기", mothership: "모선",
   // 저그 건물
-  hatchery: "부화장", lair: "둥지", hive: "군락", extractor: "추출장", spawning_pool: "산란못",
+  hatchery: "부화장", lair: "번식지", hive: "군락", extractor: "추출장", spawning_pool: "산란못",
   evolution_chamber: "진화장", roach_warren: "바퀴 소굴", baneling_nest: "맹독충 둥지",
   spine_crawler: "가시 촉수", spore_crawler: "포자 촉수", hydralisk_den: "히드라리스크 굴",
-  lurker_den: "가시지옥 굴", infestation_pit: "감염 구덩이", spire: "첨탑",
-  greater_spire: "큰 첨탑", nydus_network: "땅굴망", ultralisk_cavern: "궁극리스크 동굴",
+  lurker_den: "가시지옥 굴", infestation_pit: "감염 구덩이", spire: "둥지탑",
+  greater_spire: "거대 둥지탑", nydus_network: "땅굴망", ultralisk_cavern: "울트라리스크 동굴",
   // 저그 유닛
-  drone: "일벌레", overlord: "대군주", overseer: "감시군주", queen: "여왕", zergling: "저글링",
+  drone: "일벌레", overlord: "대군주", overseer: "감시 군주", queen: "여왕", zergling: "저글링",
   baneling: "맹독충", roach: "바퀴", ravager: "궤멸충", hydralisk: "히드라리스크",
-  lurker: "가시지옥", infestor: "감염충", swarm_host: "군단 숙주", ultralisk: "궁극리스크",
+  lurker: "가시지옥", infestor: "감염충", swarm_host: "군단 숙주", ultralisk: "울트라리스크",
   mutalisk: "뮤탈리스크", corruptor: "타락귀", brood_lord: "무리 군주", viper: "살모사",
   // 테란 업그레이드 (게임 공식명)
   infantry_weapons_1: "보병 무기 1", infantry_weapons_2: "보병 무기 2", infantry_weapons_3: "보병 무기 3",
