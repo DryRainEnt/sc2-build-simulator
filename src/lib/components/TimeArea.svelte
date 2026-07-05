@@ -148,6 +148,9 @@
   }
 
   const neg = (s: ResourceState) => s.minerals < 0 || s.gas < 0;
+
+  // 시간 표기(초/분:초)를 설정에 맞춰 포맷.
+  $: ft = (n: number) => formatTime(n, $displaySettings.timeFormat);
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
@@ -203,7 +206,7 @@
       class="marker-dot"
       class:active={m === $currentMarker}
       style="top: {timeToPx(m)}px"
-      title="{$tr('마커')} {m}s ({$tr('클릭=선택, 더블클릭=삭제')})"
+      title="{$tr('마커')} {ft(m)} ({$tr('클릭=선택, 더블클릭=삭제')})"
       on:click|stopPropagation={() => selectMarker(m)}
       on:dblclick|stopPropagation={() => removeMarker(m)}
     ></button>
@@ -236,10 +239,10 @@
   <!-- 생산 건물 유휴 구간 (빗금) -->
   {#if $displaySettings.showIdle}
     {#each leftIdle as band}
-      <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; right: calc(50% + {laneOffset(band.lane)}px)" title="{$tr('유휴')} {Math.round(band.end - band.start)}s"></div>
+      <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; right: calc(50% + {laneOffset(band.lane)}px)" title="{$tr('유휴')} {ft(Math.round(band.end - band.start))}"></div>
     {/each}
     {#each rightIdle as band}
-      <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; left: calc(50% + {laneOffset(band.lane)}px)" title="{$tr('유휴')} {Math.round(band.end - band.start)}s"></div>
+      <div class="idle" style="top: {timeToPx(band.start)}px; height: {timeToPx(band.end - band.start)}px; left: calc(50% + {laneOffset(band.lane)}px)" title="{$tr('유휴')} {ft(Math.round(band.end - band.start))}"></div>
     {/each}
   {/if}
 
@@ -247,58 +250,58 @@
   {#each leftBars as bar (bar.kind + bar.eventIndex)}
     {#if bar.kind === "prod"}
       {#if bar.orderTime < bar.start}
-        <div class="prod-wait" style="top: {timeToPx(bar.orderTime)}px; height: {timeToPx(bar.start - bar.orderTime)}px; right: calc(50% + {laneOffset(bar.lane)}px)" title="{$tr('큐 대기')} {bar.orderTime}s → {$tr('시작')} {bar.start}s"></div>
+        <div class="prod-wait" style="top: {timeToPx(bar.orderTime)}px; height: {timeToPx(bar.start - bar.orderTime)}px; right: calc(50% + {laneOffset(bar.lane)}px)" title="{$tr('큐 대기')} {ft(bar.orderTime)} → {$tr('시작')} {ft(bar.start)}"></div>
       {/if}
       <div class="prod left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
-        <div class="prod-dot" title="{$tr('완료')} {bar.end}s"></div>
-        <button class="prod-icon" title="{bar.label} · {$tr('주문')} {bar.orderTime}s · {$tr('생산')} {bar.start}s → {bar.end}s · {$tr('드래그: 블록 이동')} · {$tr('더블클릭: 제거')}" on:pointerdown={(e) => prodDown("left", bar, e)} on:pointermove={prodMove} on:pointerup={prodUp} on:dblclick|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
+        <div class="prod-dot" title="{$tr('완료')} {ft(bar.end)}"></div>
+        <button class="prod-icon" title="{bar.label} · {$tr('주문')} {ft(bar.orderTime)} · {$tr('생산')} {ft(bar.start)} → {ft(bar.end)} · {$tr('드래그: 블록 이동')} · {$tr('더블클릭: 제거')}" on:pointerdown={(e) => prodDown("left", bar, e)} on:pointermove={prodMove} on:pointerup={prodUp} on:dblclick|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
         </button>
       </div>
     {:else if bar.kind === "addon"}
       <div class="prod addon left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
-        <div class="prod-dot" title="{$tr('완료')} {bar.end}s"></div>
-        <button class="prod-icon addon-icon" class:react={bar.unitId === "reactor"} class:tech={bar.unitId === "tech_lab"} title="{bar.label} · {bar.start}s → {bar.end}s · {$tr('더블클릭: 제거')}" on:dblclick|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
+        <div class="prod-dot" title="{$tr('완료')} {ft(bar.end)}"></div>
+        <button class="prod-icon addon-icon" class:react={bar.unitId === "reactor"} class:tech={bar.unitId === "tech_lab"} title="{bar.label} · {ft(bar.start)} → {ft(bar.end)} · {$tr('더블클릭: 제거')}" on:dblclick|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={20} />
         </button>
       </div>
     {:else}
       <div class="pause left" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; right: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="pause-stem"></div>
-        <button class="pause-node start" title="{$tr('채취정지 시작')} {bar.start}s · {$tr('클릭: 삭제')}" on:click|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)}></button>
-        <button class="pause-node end" title="{$tr('정지 해제')} {bar.end}s ({$tr('지속')} {bar.end - bar.start}s) · {$tr('드래그로 조절')}" on:pointerdown={(e) => startDrag("left", bar.eventIndex, bar.start, e)} on:pointermove={moveDrag} on:pointerup={endDrag} on:click|stopPropagation={() => {}}></button>
-        <div class="pause-label">정지 {bar.end - bar.start}s</div>
+        <button class="pause-node start" title="{$tr('채취정지 시작')} {ft(bar.start)} · {$tr('클릭: 삭제')}" on:click|stopPropagation={() => removeEventByIndex("left", bar.eventIndex)}></button>
+        <button class="pause-node end" title="{$tr('정지 해제')} {ft(bar.end)} ({$tr('지속')} {ft(bar.end - bar.start)}) · {$tr('드래그로 조절')}" on:pointerdown={(e) => startDrag("left", bar.eventIndex, bar.start, e)} on:pointermove={moveDrag} on:pointerup={endDrag} on:click|stopPropagation={() => {}}></button>
+        <div class="pause-label">정지 {ft(bar.end - bar.start)}</div>
       </div>
     {/if}
   {/each}
   {#each rightBars as bar (bar.kind + bar.eventIndex)}
     {#if bar.kind === "prod"}
       {#if bar.orderTime < bar.start}
-        <div class="prod-wait" style="top: {timeToPx(bar.orderTime)}px; height: {timeToPx(bar.start - bar.orderTime)}px; left: calc(50% + {laneOffset(bar.lane)}px)" title="{$tr('큐 대기')} {bar.orderTime}s → {$tr('시작')} {bar.start}s"></div>
+        <div class="prod-wait" style="top: {timeToPx(bar.orderTime)}px; height: {timeToPx(bar.start - bar.orderTime)}px; left: calc(50% + {laneOffset(bar.lane)}px)" title="{$tr('큐 대기')} {ft(bar.orderTime)} → {$tr('시작')} {ft(bar.start)}"></div>
       {/if}
       <div class="prod right" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
-        <div class="prod-dot" title="{$tr('완료')} {bar.end}s"></div>
-        <button class="prod-icon" title="{bar.label} · {$tr('주문')} {bar.orderTime}s · {$tr('생산')} {bar.start}s → {bar.end}s · {$tr('드래그: 블록 이동')} · {$tr('더블클릭: 제거')}" on:pointerdown={(e) => prodDown("right", bar, e)} on:pointermove={prodMove} on:pointerup={prodUp} on:dblclick|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
+        <div class="prod-dot" title="{$tr('완료')} {ft(bar.end)}"></div>
+        <button class="prod-icon" title="{bar.label} · {$tr('주문')} {ft(bar.orderTime)} · {$tr('생산')} {ft(bar.start)} → {ft(bar.end)} · {$tr('드래그: 블록 이동')} · {$tr('더블클릭: 제거')}" on:pointerdown={(e) => prodDown("right", bar, e)} on:pointermove={prodMove} on:pointerup={prodUp} on:dblclick|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={24} />
         </button>
       </div>
     {:else if bar.kind === "addon"}
       <div class="prod addon right" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="prod-stem"></div>
-        <div class="prod-dot" title="{$tr('완료')} {bar.end}s"></div>
-        <button class="prod-icon addon-icon" class:react={bar.unitId === "reactor"} class:tech={bar.unitId === "tech_lab"} title="{bar.label} · {bar.start}s → {bar.end}s · {$tr('더블클릭: 제거')}" on:dblclick|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
+        <div class="prod-dot" title="{$tr('완료')} {ft(bar.end)}"></div>
+        <button class="prod-icon addon-icon" class:react={bar.unitId === "reactor"} class:tech={bar.unitId === "tech_lab"} title="{bar.label} · {ft(bar.start)} → {ft(bar.end)} · {$tr('더블클릭: 제거')}" on:dblclick|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)} on:dragstart|preventDefault={() => {}} on:click|stopPropagation={() => {}}>
           <Icon src={unitIconUrl(bar.unitId)} label={bar.label ?? ""} size={20} />
         </button>
       </div>
     {:else}
       <div class="pause right" style="top: {timeToPx(bar.start)}px; height: {timeToPx(bar.end - bar.start)}px; left: calc(50% + {laneOffset(bar.lane)}px)">
         <div class="pause-stem"></div>
-        <button class="pause-node start" title="{$tr('채취정지 시작')} {bar.start}s · {$tr('클릭: 삭제')}" on:click|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)}></button>
-        <button class="pause-node end" title="{$tr('정지 해제')} {bar.end}s ({$tr('지속')} {bar.end - bar.start}s) · {$tr('드래그로 조절')}" on:pointerdown={(e) => startDrag("right", bar.eventIndex, bar.start, e)} on:pointermove={moveDrag} on:pointerup={endDrag} on:click|stopPropagation={() => {}}></button>
-        <div class="pause-label">정지 {bar.end - bar.start}s</div>
+        <button class="pause-node start" title="{$tr('채취정지 시작')} {ft(bar.start)} · {$tr('클릭: 삭제')}" on:click|stopPropagation={() => removeEventByIndex("right", bar.eventIndex)}></button>
+        <button class="pause-node end" title="{$tr('정지 해제')} {ft(bar.end)} ({$tr('지속')} {ft(bar.end - bar.start)}) · {$tr('드래그로 조절')}" on:pointerdown={(e) => startDrag("right", bar.eventIndex, bar.start, e)} on:pointermove={moveDrag} on:pointerup={endDrag} on:click|stopPropagation={() => {}}></button>
+        <div class="pause-label">정지 {ft(bar.end - bar.start)}</div>
       </div>
     {/if}
   {/each}
@@ -307,7 +310,7 @@
   {#each leftActions as g}
     <div class="build left" style="top: {timeToPx(g.time)}px">
       {#each g.items as it}
-        <button class="chip" title="{it.label} @ {g.time}s · {$tr('클릭: 1개 제거')}" on:click|stopPropagation={() => removeOneEvent("left", g.time, it.kind, it.unitId)}>
+        <button class="chip" title="{it.label} @ {ft(g.time)} · {$tr('클릭: 1개 제거')}" on:click|stopPropagation={() => removeOneEvent("left", g.time, it.kind, it.unitId)}>
           {it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
         </button>
       {/each}
@@ -316,7 +319,7 @@
   {#each rightActions as g}
     <div class="build right" style="top: {timeToPx(g.time)}px">
       {#each g.items as it}
-        <button class="chip" title="{it.label} @ {g.time}s · {$tr('클릭: 1개 제거')}" on:click|stopPropagation={() => removeOneEvent("right", g.time, it.kind, it.unitId)}>
+        <button class="chip" title="{it.label} @ {ft(g.time)} · {$tr('클릭: 1개 제거')}" on:click|stopPropagation={() => removeOneEvent("right", g.time, it.kind, it.unitId)}>
           {it.label}{#if it.count > 1}<b> ×{it.count}</b>{/if}
         </button>
       {/each}
@@ -328,7 +331,7 @@
     {@const ls = $sims.left.stateAt($hoverTime)}
     {@const rs = $sims.right.stateAt($hoverTime)}
     <div class="guide" style="top: {timeToPx($hoverTime)}px"></div>
-    <div class="hover-time" style="top: {timeToPx($hoverTime)}px">{$hoverTime}s</div>
+    <div class="hover-time" style="top: {timeToPx($hoverTime)}px">{ft($hoverTime)}</div>
     <div class="readout left hover" class:err={neg(ls)} style="top: {timeToPx($hoverTime)}px"><ResourceReadout s={ls} larva={lv("left", $hoverTime)} /></div>
     <div class="readout right hover" class:err={neg(rs)} style="top: {timeToPx($hoverTime)}px"><ResourceReadout s={rs} larva={lv("right", $hoverTime)} /></div>
   {/if}

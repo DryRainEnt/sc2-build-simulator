@@ -15,7 +15,9 @@
     queueAddon,
     removeAddon,
     selectedTrack,
+    displaySettings,
   } from "../stores/sim";
+  import { formatTime } from "../config";
   import { RACES, unitsFor, producibleUnits, categoryOf } from "../patches";
   import { t, un } from "../i18n";
   import { unitIconUrl, resourceIconUrl } from "../icons";
@@ -181,7 +183,7 @@
   {#if cur == null}
     <p class="hint">{$t("시간선을 클릭해 마커를 먼저 배치하세요")}</p>
   {:else}
-    <p class="hint">{$t("현재 마커")}: {cur}s</p>
+    <p class="hint">{$t("현재 마커")}: {formatTime(cur, $displaySettings.timeFormat)}</p>
   {/if}
   {#if $selectedTrack?.side === side}
     <p class="hint sel">
