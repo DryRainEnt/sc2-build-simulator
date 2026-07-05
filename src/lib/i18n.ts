@@ -196,8 +196,8 @@ const KO_NAME: Record<string, string> = {
   air_armor_1: "공중 장갑 1", air_armor_2: "공중 장갑 2", air_armor_3: "공중 장갑 3",
   warpgate: "차원 관문", charge: "돌진", blink: "점멸", resonating_glaives: "공명 파열포",
   psionic_storm: "사이오닉 폭풍", shadow_stride: "그림자 걸음", gravitic_boosters: "중력 가속",
-  gravitic_drive: "중력 구동", extended_thermal_lance: "열 광선 사거리", flux_vanes: "유동 방향타",
-  anion_pulse_crystals: "음이온 진동 결정", tectonic_destabilizers: "지각 불안정 장치",
+  gravitic_drive: "중력 구동", extended_thermal_lance: "열 광선 사거리", flux_vanes: "유동성 추진기",
+  anion_pulse_crystals: "음이온파 수정", tectonic_destabilizers: "구조 불안정장치",
   // 저그 업그레이드 (게임 공식명)
   melee_attacks_1: "근접 공격 1", melee_attacks_2: "근접 공격 2", melee_attacks_3: "근접 공격 3",
   missile_attacks_1: "발사 공격 1", missile_attacks_2: "발사 공격 2", missile_attacks_3: "발사 공격 3",
