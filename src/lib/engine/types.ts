@@ -195,6 +195,8 @@ export interface ResourceState {
   mineralWorkers: number;
   /** 가스 채취 일꾼 수. */
   gasWorkers: number;
+  /** 생산 중(주문됨·완성 전)인 일꼼 수 — 병력 계산에서 제외용. */
+  workersInProd: number;
   /** 이 시점 초당 미네랄 채취량 (정지 반영). ×60 = 분당. */
   mineralRate: number;
   /** 이 시점 초당 가스 채취량 (정지 반영). ×60 = 분당. */

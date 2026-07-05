@@ -249,6 +249,17 @@ describe("시뮬레이션 — 보급 공급", () => {
     expect(r.stateAt(12).workers).toBe(13);
   });
 
+  it("생산 중 일꾼은 병력(보급)으로 분류되지 않는다", () => {
+    // 일꾼 생산 주문 → 완성 전 구간엔 workersInProd=1, 병력(=보급−일꾼−생산중일꾼)=0
+    const r = simulate([{ time: 0, kind: "train_worker" }], LOTV_PATCH, { duration: 60 });
+    const mid = r.stateAt(1);
+    expect(mid.workersInProd).toBe(1);
+    expect(mid.supplyUsed - mid.workers - mid.workersInProd).toBe(0);
+    const done = r.stateAt(60);
+    expect(done.workersInProd).toBe(0);
+    expect(done.workers).toBe(13);
+  });
+
   it("저그 건물 건설 시 드론 1 소모 + 보급 반환 (변태건물은 소모 없음)", () => {
     // 스포닝풀(드론 변태) → 시작 12드론 중 1 소모, 보급도 1 반환
     const pool = simulate([{ time: 0, kind: "build_structure", unitId: "spawning_pool" }], LOTV_PATCH, {

@@ -22,7 +22,7 @@ export interface SimulateOptions {
 // 일부 op(일꾼 재배치/사망)는 그 시점의 라이브 상태에 의존하므로,
 // 고정 숫자 델타가 아니라 walk 중에 가변 상태를 참조해 적용한다.
 type Op =
-  | { t: number; type: "spend"; minerals: number; gas: number; supply: number }
+  | { t: number; type: "spend"; minerals: number; gas: number; supply: number; worker?: boolean }
   | { t: number; type: "complete"; def: UnitDef }
   | { t: number; type: "pauseStart"; resource: "minerals" | "gas"; workers: number }
   | { t: number; type: "pauseEnd"; resource: "minerals" | "gas"; workers: number }
@@ -43,6 +43,7 @@ interface Segment {
   supplyCap: number;
   mineralWorkers: number;
   gasWorkers: number;
+  workersInProd: number;
 }
 
 /** 채취분을 왕복 단위(step)로 절삭 — 일꾼이 한 번 왕복해야 그만큼 실제 반영. */
@@ -71,7 +72,7 @@ function buildOps(
 
   // 주문 시점(마커)에 자원+보급 소모, 스케줄된 완료 시점에 유닛 등장/보급 공급.
   const emitProduction = (index: number, t: number, def: UnitDef) => {
-    push({ t, type: "spend", minerals: def.minerals, gas: def.gas, supply: def.supply });
+    push({ t, type: "spend", minerals: def.minerals, gas: def.gas, supply: def.supply, worker: def.isWorker });
     const completeTime = completeAt.get(index) ?? t + def.buildTime;
     push({ t: completeTime, type: "complete", def });
   };
@@ -169,6 +170,7 @@ export function simulate(
   }
   let mineralWorkers = patch.start.workers;
   let gasWorkers = 0;
+  let workersInProd = 0; // 생산 중(주문됨·완성 전) 일꾼 수
   let pausedMineral = 0;
   let pausedGas = 0;
 
@@ -183,10 +185,14 @@ export function simulate(
         spentMin += op.minerals;
         spentGas += op.gas;
         supplyUsed += op.supply; // 인구는 생산 시작 시점에 소모(예약)
+        if (op.worker) workersInProd += 1; // 생산 중 일꾼(완성 전까지 병력 아님)
         break;
       case "complete":
         // 완성 시점: 일꾼은 채취 합류, 보급 건물은 보급 공급 (소모는 이미 시작 때 반영)
-        if (op.def.isWorker) mineralWorkers += 1;
+        if (op.def.isWorker) {
+          mineralWorkers += 1;
+          workersInProd -= 1;
+        }
         if (op.def.supplyProvided) supplyCap += op.def.supplyProvided;
         break;
       case "pauseStart":
@@ -269,6 +275,7 @@ export function simulate(
       supplyCap,
       mineralWorkers,
       gasWorkers,
+      workersInProd,
     });
     prevStart = t;
     prevRates = r;
@@ -288,6 +295,7 @@ export function simulate(
       workers: seg.mineralWorkers + seg.gasWorkers,
       mineralWorkers: seg.mineralWorkers,
       gasWorkers: seg.gasWorkers,
+      workersInProd: seg.workersInProd,
       mineralRate: seg.mineralRate,
       gasRate: seg.gasRate,
     };

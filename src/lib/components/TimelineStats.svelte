@@ -14,7 +14,8 @@
   $: ls = $sims.left.stateAt(t0);
   $: rs = $sims.right.stateAt(t0);
 
-  const army = (s: ResourceState) => Math.max(0, Math.round(s.supplyUsed - s.workers));
+  // 병력 = 전체 소모 인구 − 완성 일꾼 − 생산 중 일꾼 (생산 큐의 일꾼은 병력 아님)
+  const army = (s: ResourceState) => Math.max(0, Math.round(s.supplyUsed - s.workers - s.workersInProd));
   const perMin = (rate: number) => Math.round(rate * 60);
 </script>
 
