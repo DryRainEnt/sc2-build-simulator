@@ -198,17 +198,17 @@ const KO_NAME: Record<string, string> = {
   psionic_storm: "사이오닉 폭풍", shadow_stride: "그림자 도약", gravitic_boosters: "중력 추진기",
   gravitic_drive: "중력 구동장치", extended_thermal_lance: "고열 광선 연장", flux_vanes: "유동 방향타",
   anion_pulse_crystals: "음이온 진동 결정", tectonic_destabilizers: "지각 불안정 장치",
-  // 저그 업그레이드
+  // 저그 업그레이드 (게임 공식명)
   melee_attacks_1: "근접 공격 1", melee_attacks_2: "근접 공격 2", melee_attacks_3: "근접 공격 3",
-  missile_attacks_1: "원거리 공격 1", missile_attacks_2: "원거리 공격 2", missile_attacks_3: "원거리 공격 3",
-  ground_carapace_1: "지상 표피 1", ground_carapace_2: "지상 표피 2", ground_carapace_3: "지상 표피 3",
-  flyer_attacks_1: "공중 공격 1", flyer_attacks_2: "공중 공격 2", flyer_attacks_3: "공중 공격 3",
-  flyer_carapace_1: "공중 표피 1", flyer_carapace_2: "공중 표피 2", flyer_carapace_3: "공중 표피 3",
-  metabolic_boost: "신진대사 촉진", adrenal_glands: "아드레날린 분비선", glial_reconstitution: "신경 재구성",
-  tunneling_claws: "굴착 발톱", grooved_spines: "홈이 파인 가시", muscular_augments: "근육 강화",
-  centrifugal_hooks: "원심 갈고리", pneumatized_carapace: "공기주머니 표피", burrow: "잠복",
-  adaptive_talons: "적응성 발톱", seismic_spines: "지진 가시", anabolic_synthesis: "동화작용 합성",
-  chitinous_plating: "키틴질 도금", neural_parasite: "신경 기생충", pathogen_glands: "병원균 분비선",
+  missile_attacks_1: "발사 공격 1", missile_attacks_2: "발사 공격 2", missile_attacks_3: "발사 공격 3",
+  ground_carapace_1: "지상 갑피 1", ground_carapace_2: "지상 갑피 2", ground_carapace_3: "지상 갑피 3",
+  flyer_attacks_1: "비행체 공격 1", flyer_attacks_2: "비행체 공격 2", flyer_attacks_3: "비행체 공격 3",
+  flyer_carapace_1: "비행체 갑피 1", flyer_carapace_2: "비행체 갑피 2", flyer_carapace_3: "비행체 갑피 3",
+  metabolic_boost: "대사 촉진", adrenal_glands: "아드레날린 분비선", glial_reconstitution: "신경 재구성",
+  tunneling_claws: "땅굴 발톱", grooved_spines: "가시 홈", muscular_augments: "근육 보강",
+  centrifugal_hooks: "원심 고리", pneumatized_carapace: "기낭 갑피", burrow: "잠복",
+  adaptive_talons: "적응형 발톱", seismic_spines: "진동 가시뼈", anabolic_synthesis: "합성 동화 작용",
+  chitinous_plating: "키틴질 장갑", neural_parasite: "신경 기생충", pathogen_glands: "병원균 분비선",
 };
 
 /** 유닛/건물/업글 이름 로컬라이저. 사용: {$un(u.id, u.name)} */
