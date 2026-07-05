@@ -188,15 +188,15 @@ const KO_NAME: Record<string, string> = {
   hurricane_engines: "자기장 가속기", cloaking_field: "은폐장", hyperflight_rotors: "초비행 회전날개",
   advanced_ballistics: "첨단 탄도 시스템", weapon_refit: "무기 재장비", caduceus_reactor: "카두세우스 반응로",
   personal_cloaking: "개인 은폐", hi_sec_auto_tracking: "정밀 보안 자동추적기", neosteel_armor: "신소재 강철 장갑",
-  // 프로토스 업그레이드
+  // 프로토스 업그레이드 (게임 공식명)
   ground_weapons_1: "지상 무기 1", ground_weapons_2: "지상 무기 2", ground_weapons_3: "지상 무기 3",
-  ground_armor_1: "지상 방어구 1", ground_armor_2: "지상 방어구 2", ground_armor_3: "지상 방어구 3",
+  ground_armor_1: "지상 장갑 1", ground_armor_2: "지상 장갑 2", ground_armor_3: "지상 장갑 3",
   shields_1: "보호막 1", shields_2: "보호막 2", shields_3: "보호막 3",
   air_weapons_1: "공중 무기 1", air_weapons_2: "공중 무기 2", air_weapons_3: "공중 무기 3",
-  air_armor_1: "공중 방어구 1", air_armor_2: "공중 방어구 2", air_armor_3: "공중 방어구 3",
-  warpgate: "차원 관문", charge: "돌진", blink: "점멸", resonating_glaives: "공명 검",
-  psionic_storm: "사이오닉 폭풍", shadow_stride: "그림자 도약", gravitic_boosters: "중력 추진기",
-  gravitic_drive: "중력 구동장치", extended_thermal_lance: "고열 광선 연장", flux_vanes: "유동 방향타",
+  air_armor_1: "공중 장갑 1", air_armor_2: "공중 장갑 2", air_armor_3: "공중 장갑 3",
+  warpgate: "차원 관문", charge: "돌진", blink: "점멸", resonating_glaives: "공명 파열포",
+  psionic_storm: "사이오닉 폭풍", shadow_stride: "그림자 걸음", gravitic_boosters: "중력 가속",
+  gravitic_drive: "중력 구동", extended_thermal_lance: "열 광선 사거리", flux_vanes: "유동 방향타",
   anion_pulse_crystals: "음이온 진동 결정", tectonic_destabilizers: "지각 불안정 장치",
   // 저그 업그레이드 (게임 공식명)
   melee_attacks_1: "근접 공격 1", melee_attacks_2: "근접 공격 2", melee_attacks_3: "근접 공격 3",
