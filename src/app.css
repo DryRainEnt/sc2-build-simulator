@@ -88,6 +88,21 @@ body {
   color: #93c5fd;
 }
 
+/* 경제 요약 바 */
+.app.dark.dark .statsbar {
+  background: #1b1b22;
+  border-bottom-color: #34343f;
+  color: #e5e7eb;
+}
+.app.dark.dark .statsbar .mid {
+  background: #23232b;
+  color: #cbd5e1;
+}
+.app.dark.dark .statsbar .stat em,
+.app.dark.dark .statsbar .stat .lbl {
+  color: #9ca3af;
+}
+
 /* 타임라인 */
 .app.dark.dark .timearea {
   background: #17171d;

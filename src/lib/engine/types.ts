@@ -195,6 +195,10 @@ export interface ResourceState {
   mineralWorkers: number;
   /** 가스 채취 일꾼 수. */
   gasWorkers: number;
+  /** 이 시점 초당 미네랄 채취량 (정지 반영). ×60 = 분당. */
+  mineralRate: number;
+  /** 이 시점 초당 가스 채취량 (정지 반영). ×60 = 분당. */
+  gasRate: number;
 }
 
 /** 자원이 마이너스가 되는 지점 (빨간 오류 마커). */

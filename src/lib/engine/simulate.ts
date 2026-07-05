@@ -288,6 +288,8 @@ export function simulate(
       workers: seg.mineralWorkers + seg.gasWorkers,
       mineralWorkers: seg.mineralWorkers,
       gasWorkers: seg.gasWorkers,
+      mineralRate: seg.mineralRate,
+      gasRate: seg.gasRate,
     };
   };
 
