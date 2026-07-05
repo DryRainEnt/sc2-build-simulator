@@ -88,6 +88,13 @@ body {
   color: #93c5fd;
 }
 
+/* 하단 상태표시줄 */
+.app.dark.dark .statusbar {
+  background: #17171d;
+  border-top-color: #34343f;
+  color: #9ca3af;
+}
+
 /* 경제 요약 바 */
 .app.dark.dark .statsbar {
   background: #1b1b22;

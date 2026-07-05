@@ -3,6 +3,7 @@
   import TabPanel from "./lib/components/TabPanel.svelte";
   import TimeArea from "./lib/components/TimeArea.svelte";
   import TimelineStats from "./lib/components/TimelineStats.svelte";
+  import StatusBar from "./lib/components/StatusBar.svelte";
   import { displaySettings } from "./lib/stores/sim";
 </script>
 
@@ -25,6 +26,8 @@
       <TabPanel side="right" />
     </aside>
   </div>
+
+  <StatusBar />
 </div>
 
 <style>

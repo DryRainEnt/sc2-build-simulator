@@ -148,6 +148,26 @@ const EN: Record<string, string> = {
   "클릭: 삭제": "click: delete",
   "클릭: 1개 제거": "click: remove one",
 
+  // 하단 상태표시줄 사용 팁
+  "시간선을 클릭해 마커를 놓고, 유닛/건물을 클릭해 생산을 추가하세요.":
+    "Click the timeline to drop a marker, then click a unit/building to add production.",
+  "생산 막대를 드래그하면 이어진 생산 큐가 함께 이동합니다.":
+    "Drag a production bar to move the whole back-to-back queue together.",
+  "생산 막대나 애드온을 더블클릭하면 제거됩니다.": "Double-click a production bar or add-on to remove it.",
+  "채취 정지는 아래쪽 끝 노드를 드래그해 기간을 조절합니다.":
+    "For a mining pause, drag the bottom end node to adjust its duration.",
+  "건물 열 머리(위쪽 아이콘)를 클릭해 선택한 뒤 기술실/반응로를 붙입니다.":
+    "Click a building column header to select it, then attach a Tech Lab / Reactor.",
+  "행동 칩을 클릭하면 하나씩 제거됩니다.": "Click an action chip to remove one at a time.",
+  "커서를 시간선에 올리면 상단 바에 그 시점의 경제 요약이 표시됩니다.":
+    "Hover over the timeline to see the economy summary for that moment in the top bar.",
+  "표시 설정에서 다크 모드·UI 배율·시간 표기·언어를 바꿀 수 있어요.":
+    "In Display settings you can change dark mode, UI scale, time format, and language.",
+  "빌드 내보내기/가져오기로 빌드를 코드로 공유할 수 있습니다.":
+    "Export / Import a build to share it as a code.",
+  "커스텀 패치 작성에서 모든 수치를 직접 편집할 수 있습니다.":
+    "New custom patch lets you edit every value yourself.",
+
   // 칩 라벨 조각 (buildSummary describe)
   일꾼: "Worker",
   사망: "death",
