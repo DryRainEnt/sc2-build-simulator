@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { timeToPx, pxToTime } from "../config";
+  import { timeToPx, pxToTime, formatTime } from "../config";
   import {
     duration,
     markers,
@@ -164,7 +164,7 @@
   <div class="axis"></div>
   {#each ticks as tk}
     <div class="tick" style="top: {timeToPx(tk)}px">
-      <span class="tick-label">{tk}s</span>
+      <span class="tick-label">{formatTime(tk, $displaySettings.timeFormat)}</span>
     </div>
   {/each}
 

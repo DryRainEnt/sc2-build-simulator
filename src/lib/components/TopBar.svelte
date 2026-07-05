@@ -140,6 +140,13 @@
           <input type="range" min="70" max="150" step="5" bind:value={$displaySettings.scale} />
           <span>{$displaySettings.scale}%</span>
         </label>
+        <label class="scale">
+          {$t("시간 표기")}
+          <select bind:value={$displaySettings.timeFormat}>
+            <option value="sec">{$t("초 (150s)")}</option>
+            <option value="mmss">{$t("분:초 (2:30)")}</option>
+          </select>
+        </label>
         <hr />
         <label><input type="checkbox" bind:checked={$displaySettings.showIdle} /> {$t("생산 건물 유휴 하이라이트")}</label>
         <label><input type="checkbox" bind:checked={$displaySettings.showTech} /> {$t("테크 선행조건 경고 마커")}</label>

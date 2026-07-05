@@ -76,6 +76,7 @@ export const displaySettings = writable({
   showLarva: true, // 저그 애벌레 그래프
   dark: false, // 다크 모드
   scale: 100, // UI 배율(%)
+  timeFormat: "sec" as "sec" | "mmss", // 시간축 표기: 초 / 분:초
   ...loadLS<Record<string, unknown>>("scbs-display", {}),
 });
 persist(displaySettings, "scbs-display");

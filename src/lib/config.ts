@@ -15,3 +15,12 @@ export function timeToPx(t: number): number {
 export function pxToTime(px: number): number {
   return px / PX_PER_SEC;
 }
+
+/** 시간(초) 표기: "sec"→"150s", "mmss"→"2:30". */
+export function formatTime(sec: number, format: "sec" | "mmss" = "sec"): string {
+  if (format === "mmss") {
+    const s = Math.max(0, Math.round(sec));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  }
+  return `${sec}s`;
+}
