@@ -17,7 +17,7 @@
     selectedTrack,
   } from "../stores/sim";
   import { RACES, unitsFor, producibleUnits, categoryOf } from "../patches";
-  import { t } from "../i18n";
+  import { t, un } from "../i18n";
   import { unitIconUrl, resourceIconUrl } from "../icons";
   import Icon from "./Icon.svelte";
   import type { Race, UnitDef } from "../engine/types";
@@ -167,9 +167,9 @@
           on:mouseenter={(e) => onEnter(u, e)}
           on:mousemove={onMoveTip}
           on:mouseleave={onLeaveTip}
-          title={u.addon ? `${u.name} — ${$t("건물 열 선택 후 클릭해 부착")}` : u.name}
+          title={u.addon ? `${$un(u.id, u.name)} — ${$t("건물 열 선택 후 클릭해 부착")}` : $un(u.id, u.name)}
         >
-          <Icon src={unitIconUrl(u.id)} label={u.name} size={54} />
+          <Icon src={unitIconUrl(u.id)} label={$un(u.id, u.name)} size={54} />
         </button>
       {/each}
       {#if prodList.length === 0}
@@ -185,7 +185,7 @@
   {/if}
   {#if $selectedTrack?.side === side}
     <p class="hint sel">
-      {$t("선택")}: {$patch.units[selType ?? ""]?.name ?? $selectedTrack.machineId}
+      {$t("선택")}: {selType ? $un(selType, $patch.units[selType]?.name ?? selType) : $selectedTrack.machineId}
       {#if selAcceptsAddon}{$t("— 기술실/반응로 클릭해 부착")}{:else}{$t("— 애드온 부착 불가(병영/군수공장/우주공항만)")}{/if}
     </p>
   {/if}

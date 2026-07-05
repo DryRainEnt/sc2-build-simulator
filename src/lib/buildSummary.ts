@@ -19,18 +19,22 @@ export interface BuildChipGroup {
 /** 번역기(없으면 원문 유지). 언어 전환 시 칩 라벨을 해당 언어로 만든다. */
 type Tr = (s: string) => string;
 const idTr: Tr = (s) => s;
+/** 유닛/건물 이름 로컬라이저 (id, 영문 fallback → 표시명). */
+type NameFn = (id: string, fallback: string) => string;
+const idName: NameFn = (_id, fb) => fb;
 
 function describe(
   e: BuildEvent,
   patch: PatchData,
   tr: Tr = idTr,
+  nm: NameFn = idName,
 ): { key: string; label: string; unitId?: string } {
   switch (e.kind) {
     case "train_worker":
       return { key: "worker", label: tr("일꾼") };
     case "train_unit":
     case "build_structure": {
-      const name = patch.units[e.unitId]?.name ?? e.unitId;
+      const name = nm(e.unitId, patch.units[e.unitId]?.name ?? e.unitId);
       return { key: `u:${e.unitId}`, label: name, unitId: e.unitId };
     }
     case "assign_worker": {
@@ -46,7 +50,7 @@ function describe(
         label: `${tr("채취정지")} ${e.workers}${tr("기")}/${e.duration}s`,
       };
     case "unit_death": {
-      const name = patch.units[e.unitId]?.name ?? (e.unitId === "worker" ? tr("일꾼") : e.unitId);
+      const name = nm(e.unitId, patch.units[e.unitId]?.name ?? (e.unitId === "worker" ? tr("일꾼") : e.unitId));
       return { key: `death:${e.unitId}`, label: `${name} ${tr("사망")}`, unitId: e.unitId };
     }
     case "inject":
@@ -113,7 +117,7 @@ export interface TimelineLayout {
  * - 각 생산 건물 인스턴스(machineId)에 고정 열. 반응로가 붙어 동시 2기면 열이 2줄로 벌어짐.
  * - 무시설(폴백)·비생산 건물·정지는 건물 열 뒤쪽 레인에 겹침 회피 packing.
  */
-export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Race = "terran"): TimelineLayout {
+export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Race = "terran", nm: NameFn = idName): TimelineLayout {
   const sched = scheduleProduction(events, patch, race);
   const reactored = new Set<string>();
   const techLabbed = new Set<string>();
@@ -133,7 +137,7 @@ export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Rac
       orderTime: s.orderTime,
       lane: 0,
       eventIndex: s.eventIndex,
-      label: patch.units[s.unitId]?.name ?? s.unitId,
+      label: nm(s.unitId, patch.units[s.unitId]?.name ?? s.unitId),
       unitId: s.unitId,
       machineId: s.machineId,
       isBuilding: s.isBuilding,
@@ -157,7 +161,7 @@ export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Rac
       orderTime: e.time,
       lane: 0,
       eventIndex: i,
-      label: def.name,
+      label: nm(e.addon, def.name),
       unitId: e.addon,
       machineId: e.machineId,
       isBuilding: false,
@@ -215,8 +219,8 @@ export function layoutTimeline(events: BuildEvent[], patch: PatchData, race: Rac
   return { bars: [...facilityBars, ...miscBars], tracks };
 }
 
-export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race = "terran"): TimelineBar[] {
-  return layoutTimeline(events, patch, race).bars;
+export function timelineBars(events: BuildEvent[], patch: PatchData, race: Race = "terran", nm: NameFn = idName): TimelineBar[] {
+  return layoutTimeline(events, patch, race, nm).bars;
 }
 
 export function facilityTracks(events: BuildEvent[], patch: PatchData, race: Race = "terran"): FacilityTrack[] {
@@ -280,10 +284,15 @@ export function contiguousBlock(bars: TimelineBar[], bar: TimelineBar): number[]
   return block;
 }
 
-export function summarizeBuild(events: BuildEvent[], patch: PatchData, tr: Tr = idTr): BuildChipGroup[] {
+export function summarizeBuild(
+  events: BuildEvent[],
+  patch: PatchData,
+  tr: Tr = idTr,
+  nm: NameFn = idName,
+): BuildChipGroup[] {
   const byTime = new Map<number, Map<string, BuildChipItem>>();
   for (const e of events) {
-    const { key, label, unitId } = describe(e, patch, tr);
+    const { key, label, unitId } = describe(e, patch, tr, nm);
     let m = byTime.get(e.time);
     if (!m) {
       m = new Map();

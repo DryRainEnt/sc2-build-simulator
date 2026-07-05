@@ -140,3 +140,79 @@ const EN: Record<string, string> = {
 
 /** 번역 함수 스토어. 사용: {$t("유닛")} */
 export const t = derived(lang, ($lang) => (s: string) => ($lang === "en" ? (EN[s] ?? s) : s));
+
+// 유닛/건물/업그레이드 공식 한국어 명칭 (id → 한글). 없으면 영문 fallback.
+const KO_NAME: Record<string, string> = {
+  // 테란 건물
+  command_center: "사령부", orbital_command: "궤도 사령부", planetary_fortress: "행성 요새",
+  supply_depot: "보급고", refinery: "정제소", barracks: "병영", engineering_bay: "공학 연구소",
+  bunker: "벙커", missile_turret: "미사일 포탑", sensor_tower: "감지탑", factory: "군수공장",
+  ghost_academy: "유령 사관학교", armory: "무기고", starport: "우주공항", fusion_core: "융합로",
+  tech_lab: "기술실", reactor: "반응로",
+  // 테란 유닛
+  scv: "SCV", mule: "뮬", marine: "해병", marauder: "불곰", reaper: "사신", ghost: "유령",
+  hellion: "화염차", hellbat: "화염기갑병", widow_mine: "지뢰", siege_tank: "공성 전차",
+  cyclone: "사이클론", thor: "토르", viking: "바이킹", medivac: "의료선", liberator: "해방선",
+  banshee: "밴시", raven: "밤까마귀", battlecruiser: "전투순양함",
+  // 프로토스 건물
+  nexus: "연결체", pylon: "수정탑", assimilator: "융화소", gateway: "관문",
+  cybernetics_core: "인공제어소", forge: "제련소", photon_cannon: "광자포",
+  shield_battery: "보호막 충전소", twilight_council: "황혼 의회", stargate: "우주관문",
+  robotics_facility: "로봇공학 시설", robotics_bay: "로봇공학 지원소",
+  templar_archives: "기사단 기록보관소", dark_shrine: "암흑 성소", fleet_beacon: "함대 신호소",
+  // 프로토스 유닛
+  probe: "탐사정", zealot: "광전사", stalker: "추적자", sentry: "파수기", adept: "사도",
+  high_templar: "고위 기사", dark_templar: "암흑 기사", archon: "집정관", immortal: "불멸자",
+  colossus: "거신", disruptor: "분열기", observer: "관측선", warp_prism: "차원 분광기",
+  phoenix: "불사조", void_ray: "공허 포격기", oracle: "예언자", tempest: "폭풍함",
+  carrier: "우주모함", interceptor: "요격기", mothership: "모선",
+  // 저그 건물
+  hatchery: "부화장", lair: "둥지", hive: "군락", extractor: "추출장", spawning_pool: "산란못",
+  evolution_chamber: "진화장", roach_warren: "바퀴 소굴", baneling_nest: "맹독충 둥지",
+  spine_crawler: "가시 촉수", spore_crawler: "포자 촉수", hydralisk_den: "히드라리스크 굴",
+  lurker_den: "가시지옥 굴", infestation_pit: "감염 구덩이", spire: "첨탑",
+  greater_spire: "큰 첨탑", nydus_network: "땅굴망", ultralisk_cavern: "궁극리스크 동굴",
+  // 저그 유닛
+  drone: "일벌레", overlord: "대군주", overseer: "감시군주", queen: "여왕", zergling: "저글링",
+  baneling: "맹독충", roach: "바퀴", ravager: "궤멸충", hydralisk: "히드라리스크",
+  lurker: "가시지옥", infestor: "감염충", swarm_host: "군단 숙주", ultralisk: "궁극리스크",
+  mutalisk: "뮤탈리스크", corruptor: "타락귀", brood_lord: "무리 군주", viper: "살모사",
+  // 테란 업그레이드
+  infantry_weapons_1: "보병 무기 1", infantry_weapons_2: "보병 무기 2", infantry_weapons_3: "보병 무기 3",
+  infantry_armor_1: "보병 방어구 1", infantry_armor_2: "보병 방어구 2", infantry_armor_3: "보병 방어구 3",
+  vehicle_weapons_1: "차량 무기 1", vehicle_weapons_2: "차량 무기 2", vehicle_weapons_3: "차량 무기 3",
+  ship_weapons_1: "함선 무기 1", ship_weapons_2: "함선 무기 2", ship_weapons_3: "함선 무기 3",
+  vehicle_ship_plating_1: "차량 및 함선 도금 1", vehicle_ship_plating_2: "차량 및 함선 도금 2", vehicle_ship_plating_3: "차량 및 함선 도금 3",
+  stimpack: "전투 자극제", combat_shield: "전투 방패", concussive_shells: "진탕탄",
+  infernal_pre_igniter: "지옥불 점화기", smart_servos: "지능형 구동장치", drilling_claws: "천공 발톱",
+  hurricane_engines: "태풍 엔진", cloaking_field: "은폐장", hyperflight_rotors: "초고속 비행 로터",
+  advanced_ballistics: "고급 탄도학", weapon_refit: "무기 개조", caduceus_reactor: "카두케우스 원자로",
+  personal_cloaking: "개인 은폐", hi_sec_auto_tracking: "고보안 자동 추적", neosteel_armor: "네오강철 장갑",
+  // 프로토스 업그레이드
+  ground_weapons_1: "지상 무기 1", ground_weapons_2: "지상 무기 2", ground_weapons_3: "지상 무기 3",
+  ground_armor_1: "지상 방어구 1", ground_armor_2: "지상 방어구 2", ground_armor_3: "지상 방어구 3",
+  shields_1: "보호막 1", shields_2: "보호막 2", shields_3: "보호막 3",
+  air_weapons_1: "공중 무기 1", air_weapons_2: "공중 무기 2", air_weapons_3: "공중 무기 3",
+  air_armor_1: "공중 방어구 1", air_armor_2: "공중 방어구 2", air_armor_3: "공중 방어구 3",
+  warpgate: "차원 관문", charge: "돌진", blink: "점멸", resonating_glaives: "공명 검",
+  psionic_storm: "사이오닉 폭풍", shadow_stride: "그림자 도약", gravitic_boosters: "중력 추진기",
+  gravitic_drive: "중력 구동장치", extended_thermal_lance: "고열 광선 연장", flux_vanes: "유동 방향타",
+  anion_pulse_crystals: "음이온 진동 결정", tectonic_destabilizers: "지각 불안정 장치",
+  // 저그 업그레이드
+  melee_attacks_1: "근접 공격 1", melee_attacks_2: "근접 공격 2", melee_attacks_3: "근접 공격 3",
+  missile_attacks_1: "원거리 공격 1", missile_attacks_2: "원거리 공격 2", missile_attacks_3: "원거리 공격 3",
+  ground_carapace_1: "지상 표피 1", ground_carapace_2: "지상 표피 2", ground_carapace_3: "지상 표피 3",
+  flyer_attacks_1: "공중 공격 1", flyer_attacks_2: "공중 공격 2", flyer_attacks_3: "공중 공격 3",
+  flyer_carapace_1: "공중 표피 1", flyer_carapace_2: "공중 표피 2", flyer_carapace_3: "공중 표피 3",
+  metabolic_boost: "신진대사 촉진", adrenal_glands: "아드레날린 분비선", glial_reconstitution: "신경 재구성",
+  tunneling_claws: "굴착 발톱", grooved_spines: "홈이 파인 가시", muscular_augments: "근육 강화",
+  centrifugal_hooks: "원심 갈고리", pneumatized_carapace: "공기주머니 표피", burrow: "잠복",
+  adaptive_talons: "적응성 발톱", seismic_spines: "지진 가시", anabolic_synthesis: "동화작용 합성",
+  chitinous_plating: "키틴질 도금", neural_parasite: "신경 기생충", pathogen_glands: "병원균 분비선",
+};
+
+/** 유닛/건물/업글 이름 로컬라이저. 사용: {$un(u.id, u.name)} */
+export const un = derived(
+  lang,
+  ($lang) => (id: string, fallback: string) => ($lang === "ko" ? (KO_NAME[id] ?? fallback) : fallback),
+);

@@ -27,9 +27,9 @@
   import Icon from "./Icon.svelte";
   import ResourceReadout from "./ResourceReadout.svelte";
   import LarvaGraph from "./LarvaGraph.svelte";
-  import { t as tr } from "../i18n";
+  import { t as tr, un } from "../i18n";
 
-  const nameOf = (id: string) => $patch.units[id]?.name ?? id;
+  const nameOf = (id: string) => $un(id, $patch.units[id]?.name ?? id);
   const missingLabel = (missing: string[]) => missing.map(nameOf).join(", ");
 
   // 순간 행동(칩)으로 표시할 것: 일꾼 배치/사망 (채취정지는 드래그 막대로)
@@ -37,10 +37,10 @@
     e.kind === "assign_worker" || e.kind === "unit_death" || e.kind === "inject";
 
   // 생산/건설/정지 = 기간 막대(한 레인 체계, 실제 시작~완료), 배치/사망 = 순간 칩
-  $: leftBars = timelineBars($factions.left.events, $patch, $factions.left.race);
-  $: rightBars = timelineBars($factions.right.events, $patch, $factions.right.race);
-  $: leftActions = summarizeBuild($factions.left.events.filter(isChipAction), $patch, $tr);
-  $: rightActions = summarizeBuild($factions.right.events.filter(isChipAction), $patch, $tr);
+  $: leftBars = timelineBars($factions.left.events, $patch, $factions.left.race, $un);
+  $: rightBars = timelineBars($factions.right.events, $patch, $factions.right.race, $un);
+  $: leftActions = summarizeBuild($factions.left.events.filter(isChipAction), $patch, $tr, $un);
+  $: rightActions = summarizeBuild($factions.right.events.filter(isChipAction), $patch, $tr, $un);
 
   // 생산 건물 유휴 구간(빌드 최적화용)
   $: leftIdle = idleIntervals(leftBars);
@@ -216,7 +216,7 @@
     {#if isSelected("left", t.machineId)}
       <div class="track-tint" style="top: 0; height: {height}px; right: calc(50% + {laneOffset(t.lane)}px); width: {bandWidth(t.laneCount)}px"></div>
     {/if}
-    <button class="track-head left" class:sel={isSelected("left", t.machineId)} style="right: calc(50% + {laneOffset(t.lane)}px)" title="{$patch.units[t.type]?.name ?? t.type} · {$tr('클릭: 선택(애드온 부착)')}" on:click|stopPropagation={() => selectTrack("left", t.machineId)}>
+    <button class="track-head left" class:sel={isSelected("left", t.machineId)} style="right: calc(50% + {laneOffset(t.lane)}px)" title="{nameOf(t.type)} · {$tr('클릭: 선택(애드온 부착)')}" on:click|stopPropagation={() => selectTrack("left", t.machineId)}>
       <Icon src={iconOfType(t.type)} label={t.type} size={18} />
       {#if t.hasReactor}<span class="rbadge react">R</span>{/if}
       {#if t.hasTechLab}<span class="rbadge tech">T</span>{/if}
@@ -226,7 +226,7 @@
     {#if isSelected("right", t.machineId)}
       <div class="track-tint" style="top: 0; height: {height}px; left: calc(50% + {laneOffset(t.lane)}px); width: {bandWidth(t.laneCount)}px"></div>
     {/if}
-    <button class="track-head right" class:sel={isSelected("right", t.machineId)} style="left: calc(50% + {laneOffset(t.lane)}px)" title="{$patch.units[t.type]?.name ?? t.type} · {$tr('클릭: 선택(애드온 부착)')}" on:click|stopPropagation={() => selectTrack("right", t.machineId)}>
+    <button class="track-head right" class:sel={isSelected("right", t.machineId)} style="left: calc(50% + {laneOffset(t.lane)}px)" title="{nameOf(t.type)} · {$tr('클릭: 선택(애드온 부착)')}" on:click|stopPropagation={() => selectTrack("right", t.machineId)}>
       <Icon src={iconOfType(t.type)} label={t.type} size={18} />
       {#if t.hasReactor}<span class="rbadge react">R</span>{/if}
       {#if t.hasTechLab}<span class="rbadge tech">T</span>{/if}

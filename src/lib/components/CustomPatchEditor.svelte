@@ -2,7 +2,7 @@
   import { createEventDispatcher } from "svelte";
   import { saveCustomPatch } from "../stores/sim";
   import type { PatchData, UnitDef } from "../engine/types";
-  import { t } from "../i18n";
+  import { t, un } from "../i18n";
 
   export let base: PatchData;
   const dispatch = createEventDispatcher();
@@ -92,7 +92,7 @@
           <tbody>
             {#each units as u (u.id)}
               <tr>
-                <td class="nm">{u.name}</td>
+                <td class="nm">{$un(u.id, u.name)}</td>
                 <td class="race {u.race}">{u.race[0].toUpperCase()}</td>
                 <td><input type="number" bind:value={u.minerals} /></td>
                 <td><input type="number" bind:value={u.gas} /></td>
