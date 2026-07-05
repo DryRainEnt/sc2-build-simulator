@@ -5,12 +5,25 @@ import { derived, writable } from "svelte/store";
 
 export type Lang = "ko" | "en";
 
-function loadLang(): Lang {
+/** 브라우저/시스템 언어로 초기값 추정 (한국어면 ko, 그 외 en). */
+function detectLang(): Lang {
   try {
-    return (localStorage.getItem("scbs-lang") as Lang) || "ko";
+    const langs = [navigator.language, ...(navigator.languages ?? [])];
+    return langs.some((l) => l?.toLowerCase().startsWith("ko")) ? "ko" : "en";
   } catch {
     return "ko";
   }
+}
+
+function loadLang(): Lang {
+  try {
+    // 저장된 사용자 선택이 있으면 우선, 없으면 시스템 언어로.
+    const saved = localStorage.getItem("scbs-lang");
+    if (saved === "ko" || saved === "en") return saved;
+  } catch {
+    /* ignore */
+  }
+  return detectLang();
 }
 
 export const lang = writable<Lang>(loadLang());
