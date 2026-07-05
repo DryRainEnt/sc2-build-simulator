@@ -22,10 +22,10 @@
   {#each [ls, rs] as s, i}
     {#if i === 1}<div class="mid">{formatTime(Math.round(t0), $displaySettings.timeFormat)}</div>{/if}
     <div class="fac" class:right={i === 1}>
-      <span class="stat" title={$t("일꾼")}><span class="wk">👷</span><b>{s.workers}</b></span>
+      <span class="stat" title={$t("일꾼")}><span class="emo">🔧</span><b>{s.workers}</b></span>
       <span class="stat"><Icon src={icMin} label="M" size={14} /><b>{s.mineralWorkers}</b><em>{perMin(s.mineralRate)}{$t("/분")}</em></span>
       <span class="stat"><Icon src={icGas} label="G" size={14} /><b>{s.gasWorkers}</b><em>{perMin(s.gasRate)}{$t("/분")}</em></span>
-      <span class="stat sup"><span class="lbl">{$t("병력")}</span><b>{army(s)}</b></span>
+      <span class="stat sup" title={$t("병력")}><span class="emo">⚔️</span><b>{army(s)}</b></span>
       <span class="stat sup"><span class="lbl">{$t("인구")}</span><b>{s.supplyUsed}/{s.supplyCap}</b></span>
     </div>
   {/each}
@@ -77,8 +77,9 @@
     color: #64748b;
     font-size: 11px;
   }
-  .wk {
-    font-size: 12px;
+  .emo {
+    font-size: 13px;
+    line-height: 1;
   }
   .stat .lbl {
     color: #64748b;
