@@ -94,6 +94,31 @@ body {
   border-top-color: #34343f;
   color: #9ca3af;
 }
+.app.dark.dark .statusbar .guide-btn {
+  background: #262631;
+  border-color: #4b5563;
+  color: #dbe4e8;
+}
+.app.dark.dark .statusbar .guide-btn:hover {
+  background: #1e3a8a;
+  color: #dbeafe;
+}
+
+/* 사용 가이드 모달 */
+.app.dark.dark .guide-modal {
+  background: #22222b;
+  color: #e5e7eb;
+}
+.app.dark.dark .guide-modal header,
+.app.dark.dark .guide-modal .foot {
+  border-color: #34343f;
+}
+.app.dark.dark .guide-modal li {
+  color: #cbd5e1;
+}
+.app.dark.dark .guide-modal .x {
+  color: #9ca3af;
+}
 
 /* 경제 요약 바 */
 .app.dark.dark .statsbar {

@@ -63,6 +63,7 @@ const EN: Record<string, string> = {
   병력: "Army",
   인구: "Supply",
   "/분": "/min",
+  "사용 가이드": "Guide",
   "시간 표기": "Time format",
   "초 (150s)": "Seconds (150s)",
   "분:초 (2:30)": "Min:sec (2:30)",

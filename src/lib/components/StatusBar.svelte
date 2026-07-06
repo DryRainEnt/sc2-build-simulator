@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { fade } from "svelte/transition";
   import { t } from "../i18n";
+  import GuideModal from "./GuideModal.svelte";
 
   // 하단 상태표시줄에 순환 표시할 사용 팁(한국어 원문 키 → i18n 번역).
   const TIPS = [
@@ -19,10 +20,27 @@
 
   let idx = 0;
   let timer: ReturnType<typeof setInterval>;
+  let guideOpen = false;
+
   onMount(() => {
     timer = setInterval(() => (idx = (idx + 1) % TIPS.length), 7000);
+    // 첫 방문이면 가이드를 한 번 자동으로 띄운다.
+    try {
+      if (!localStorage.getItem("scbs-guide-seen")) guideOpen = true;
+    } catch {
+      /* ignore */
+    }
   });
   onDestroy(() => clearInterval(timer));
+
+  function closeGuide() {
+    guideOpen = false;
+    try {
+      localStorage.setItem("scbs-guide-seen", "1");
+    } catch {
+      /* ignore */
+    }
+  }
 </script>
 
 <div class="statusbar">
@@ -30,7 +48,13 @@
   {#key idx}
     <span class="tip" in:fade={{ duration: 350 }}>{$t(TIPS[idx])}</span>
   {/key}
+  <span class="spacer"></span>
+  <button class="guide-btn" on:click={() => (guideOpen = true)}>📖 {$t("사용 가이드")}</button>
 </div>
+
+{#if guideOpen}
+  <GuideModal on:close={closeGuide} />
+{/if}
 
 <style>
   .statusbar {
@@ -54,5 +78,25 @@
     /* {#key} 전환 시 겹치지 않게 흐름에서 유지 */
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .spacer {
+    flex: 1;
+  }
+  .guide-btn {
+    flex: none;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #94a3b8;
+    border-radius: 4px;
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .guide-btn:hover {
+    background: #dbeafe;
+    border-color: #2563eb;
+    color: #1d4ed8;
   }
 </style>
